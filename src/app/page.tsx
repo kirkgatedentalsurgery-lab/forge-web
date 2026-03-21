@@ -21,8 +21,8 @@ export default async function Home() {
         <p className="text-lg sm:text-xl text-muted-foreground font-medium mb-2">
           Intelligent Lifting Coach
         </p>
-        <p className="text-2xl sm:text-3xl font-semibold tracking-tight mb-10">
-          Be the person you want to be
+        <p className="text-2xl sm:text-3xl font-semibold tracking-tight uppercase mb-10">
+          BE THE PERSON YOU WANT TO BE
         </p>
 
         <div className="flex gap-4">
