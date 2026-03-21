@@ -5,7 +5,7 @@ import {
   MuscleGroup,
 } from '@/types';
 import { resolveDaySchedule } from './split-templates';
-import { DEFAULT_MESOCYCLE, REP_RANGES, REST_TIMES } from '@/lib/constants';
+import { DEFAULT_MESOCYCLE, REP_RANGES, REST_TIMES, calculateMaxSets } from '@/lib/constants';
 
 export interface GeneratedProgram {
   programId: string;
@@ -58,7 +58,10 @@ export async function generateProgram(
     throw new Error('Could not resolve day schedule for this split type');
   }
 
-  const volumeAllocation = allocateVolume(daySchedule, muscleMap);
+  const sessionMinutes = input.sessionMinutes || 60;
+  const maxSetsPerDay = calculateMaxSets(sessionMinutes);
+
+  const volumeAllocation = allocateVolume(daySchedule, muscleMap, maxSetsPerDay);
 
   const usedExerciseIds = new Set<string>();
   const dayExercises = daySchedule.map((day, dayIndex) => {
@@ -72,7 +75,7 @@ export async function generateProgram(
       })
       .filter(Boolean) as { muscleGroup: MuscleGroup; sets: number }[];
 
-    const selected = selectExercisesForDay(dayMuscles, exercises, usedExerciseIds);
+    const selected = selectExercisesForDay(dayMuscles, exercises, usedExerciseIds, maxSetsPerDay);
     selected.forEach((ex) => usedExerciseIds.add(ex.exerciseId));
 
     return {
@@ -188,7 +191,8 @@ interface DayVolumeAllocation {
 
 function allocateVolume(
   daySchedule: { label: string; muscles: string[] }[],
-  muscleMap: Map<string, MuscleGroup>
+  muscleMap: Map<string, MuscleGroup>,
+  maxSetsPerDay: number = 18
 ): Map<string, DayVolumeAllocation[]> {
   const allocation = new Map<string, DayVolumeAllocation[]>();
   const muscleDays = new Map<string, number[]>();
@@ -200,11 +204,16 @@ function allocateVolume(
     });
   });
 
+  // Scale volume based on available sets per day
+  // Short sessions → closer to MEV, long sessions → closer to MAV
+  const volumeScale = Math.min(1.0, maxSetsPerDay / 18); // 18 sets = "normal" 60-min session
+
   for (const [muscleName, dayIndices] of muscleDays) {
     const mg = muscleMap.get(muscleName);
     if (!mg) continue;
-    const totalWeeklySets = Math.max(mg.mev + 2, Math.ceil(mg.mav * 0.7));
-    const setsPerDay = Math.max(2, Math.round(totalWeeklySets / dayIndices.length));
+    const baseWeeklySets = Math.max(mg.mev + 2, Math.ceil(mg.mav * 0.7));
+    const scaledWeeklySets = Math.max(mg.mev, Math.round(baseWeeklySets * volumeScale));
+    const setsPerDay = Math.max(2, Math.round(scaledWeeklySets / dayIndices.length));
     allocation.set(muscleName, dayIndices.map((dayIndex) => ({ dayIndex, sets: setsPerDay })));
   }
 
@@ -214,16 +223,19 @@ function allocateVolume(
 function selectExercisesForDay(
   targetMuscles: { muscleGroup: MuscleGroup; sets: number }[],
   allExercises: Exercise[],
-  usedExerciseIds: Set<string>
+  usedExerciseIds: Set<string>,
+  maxSetsPerDay: number = 18
 ): GeneratedExercise[] {
   const selected: GeneratedExercise[] = [];
   const coveredSets = new Map<string, number>();
   let orderIndex = 0;
+  let totalSetsUsed = 0;
   const sortedMuscles = [...targetMuscles].sort((a, b) => b.sets - a.sets);
 
   // Phase 1: Compounds
   const compounds = allExercises.filter((ex) => ex.isCompound && !usedExerciseIds.has(ex.id));
   for (const muscle of sortedMuscles) {
+    if (totalSetsUsed >= maxSetsPerDay) break;
     const remaining = muscle.sets - (coveredSets.get(muscle.muscleGroup.name) || 0);
     if (remaining <= 0) continue;
 
@@ -233,12 +245,14 @@ function selectExercisesForDay(
 
     if (matching.length > 0) {
       const pick = matching[Math.floor(Math.random() * Math.min(3, matching.length))];
-      const sets = Math.min(remaining, 4);
+      const sets = Math.min(remaining, 4, maxSetsPerDay - totalSetsUsed);
+      if (sets <= 0) break;
       selected.push({
         exerciseId: pick.id, exerciseName: pick.name, orderIndex: orderIndex++,
         targetSets: sets, targetRepsMin: REP_RANGES.compound.min, targetRepsMax: REP_RANGES.compound.max,
         targetRir: 3, restSeconds: REST_TIMES.compound,
       });
+      totalSetsUsed += sets;
       for (const mg of pick.muscleGroups) {
         if (!mg.muscleGroup) continue;
         coveredSets.set(mg.muscleGroup.name, (coveredSets.get(mg.muscleGroup.name) || 0) + Math.round(sets * mg.stimulusMagnitude));
@@ -248,11 +262,12 @@ function selectExercisesForDay(
     }
   }
 
-  // Phase 2: Isolations
+  // Phase 2: Isolations (only if budget remains)
   const isolations = allExercises.filter(
     (ex) => !ex.isCompound && !usedExerciseIds.has(ex.id) && !selected.some((s) => s.exerciseId === ex.id)
   );
   for (const muscle of sortedMuscles) {
+    if (totalSetsUsed >= maxSetsPerDay) break;
     const covered = coveredSets.get(muscle.muscleGroup.name) || 0;
     const remaining = muscle.sets - covered;
     if (remaining <= 1) continue;
@@ -262,12 +277,14 @@ function selectExercisesForDay(
     );
     if (matching.length > 0) {
       const pick = matching[Math.floor(Math.random() * Math.min(3, matching.length))];
-      const sets = Math.min(remaining, 3);
+      const sets = Math.min(remaining, 3, maxSetsPerDay - totalSetsUsed);
+      if (sets <= 0) break;
       selected.push({
         exerciseId: pick.id, exerciseName: pick.name, orderIndex: orderIndex++,
         targetSets: sets, targetRepsMin: REP_RANGES.isolation.min, targetRepsMax: REP_RANGES.isolation.max,
         targetRir: 3, restSeconds: REST_TIMES.isolation,
       });
+      totalSetsUsed += sets;
       coveredSets.set(muscle.muscleGroup.name, covered + sets);
       const idx = isolations.indexOf(pick);
       if (idx >= 0) isolations.splice(idx, 1);

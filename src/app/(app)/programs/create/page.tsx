@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Slider } from '@/components/ui/slider';
 import { cn } from '@/lib/utils';
-import { SPLIT_INFO } from '@/lib/constants';
+import { SPLIT_INFO, SESSION_PRESETS } from '@/lib/constants';
 import { SplitType } from '@/types';
 import { Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { ModeSelector, TrainingMode } from '@/components/programs/mode-selector';
@@ -31,6 +31,7 @@ export default function CreateProgramPage() {
   const [splitType, setSplitType] = useState<SplitType | null>(null);
   const [daysPerWeek, setDaysPerWeek] = useState(0);
   const [numWeeks, setNumWeeks] = useState(5);
+  const [sessionMinutes, setSessionMinutes] = useState(profile?.preferredSessionMinutes || 60);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState('');
   const [strengthLifts, setStrengthLifts] = useState<StrengthLifts>({ squat: null, bench: null, deadlift: null, ohp: null });
@@ -53,10 +54,11 @@ export default function CreateProgramPage() {
         daysPerWeek,
         numWeeks,
         hasDeload: true,
-        availableEquipment: ['barbell', 'dumbbell', 'cable', 'machine', 'bodyweight'],
-        experienceLevel: 'intermediate',
+        availableEquipment: (profile?.availableEquipment || ['barbell', 'dumbbell', 'cable', 'machine', 'bodyweight']) as any,
+        experienceLevel: (profile?.experienceLevel || 'intermediate') as any,
         userId: user.id,
         programName: name.trim(),
+        sessionMinutes,
       });
 
       router.push(`/programs/${result.programId}`);
@@ -180,6 +182,26 @@ export default function CreateProgramPage() {
                   </button>
                 );
               })}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Session length</Label>
+            <div className="grid grid-cols-4 gap-2">
+              {SESSION_PRESETS.map((preset) => (
+                <button
+                  key={preset.value}
+                  onClick={() => setSessionMinutes(preset.value)}
+                  className={cn(
+                    'py-3 rounded-lg text-center border-2 transition-colors',
+                    sessionMinutes === preset.value
+                      ? 'bg-primary text-primary-foreground border-primary'
+                      : 'bg-secondary border-border hover:border-primary/50'
+                  )}>
+                  <span className="text-sm font-bold block">{preset.label}</span>
+                  <span className="text-[10px] text-muted-foreground block mt-0.5">{preset.description.split('—')[1]?.trim()}</span>
+                </button>
+              ))}
             </div>
           </div>
 

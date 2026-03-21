@@ -5,6 +5,43 @@ export const REST_TIMES = {
   isolation: 90,
 } as const;
 
+// Time per set in minutes (execution + rest + transition)
+export const TIME_PER_SET = {
+  compound: 3.5,
+  accessory: 2.5,
+  isolation: 2.0,
+} as const;
+
+// Fixed overhead per session in minutes
+export const SESSION_OVERHEAD = 10; // warm-up + cooldown + transitions
+
+/**
+ * Calculate maximum total sets for a given session duration.
+ * Uses average time per set (~2.5 min) after subtracting overhead.
+ */
+export function calculateMaxSets(sessionMinutes: number): number {
+  const availableMinutes = Math.max(0, sessionMinutes - SESSION_OVERHEAD);
+  const avgTimePerSet = 2.5; // weighted average across set types
+  return Math.floor(availableMinutes / avgTimePerSet);
+}
+
+/**
+ * Calculate maximum exercises for a given session duration.
+ */
+export function calculateMaxExercises(sessionMinutes: number): number {
+  const maxSets = calculateMaxSets(sessionMinutes);
+  // Average ~3 sets per exercise
+  return Math.max(2, Math.ceil(maxSets / 3));
+}
+
+// Session duration presets
+export const SESSION_PRESETS = [
+  { value: 30, label: '30 min', description: 'Quick session — 2-3 exercises' },
+  { value: 45, label: '45 min', description: 'Standard — 3-4 exercises' },
+  { value: 60, label: '60 min', description: 'Full session — 4-5 exercises' },
+  { value: 90, label: '90 min', description: 'Extended — 6-8 exercises' },
+] as const;
+
 // Weight increments in lbs
 export const WEIGHT_INCREMENTS = {
   compound: 5,

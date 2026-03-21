@@ -36,6 +36,7 @@ export interface GenerateProgramInput {
   experienceLevel: import('./exercise').Difficulty;
   userId: string;
   programName: string;
+  sessionMinutes?: number; // target session length (30-120)
 }
 
 export interface ReadinessInput {
