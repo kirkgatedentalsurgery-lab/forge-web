@@ -50,5 +50,21 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Logged in but hasn't completed onboarding — redirect to onboarding
+  const isOnboardingRoute = pathname.startsWith('/onboarding');
+  if (user && isAppRoute && !isOnboardingRoute) {
+    const { data: profile } = await supabase
+      .from('user_profiles')
+      .select('onboarding_completed')
+      .eq('id', user.id)
+      .single();
+
+    if (profile && !profile.onboarding_completed) {
+      const url = request.nextUrl.clone();
+      url.pathname = '/onboarding';
+      return NextResponse.redirect(url);
+    }
+  }
+
   return supabaseResponse;
 }

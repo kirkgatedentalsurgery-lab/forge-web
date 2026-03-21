@@ -41,7 +41,7 @@ export default function RegisterPage() {
     if (authError) {
       setError(authError.message);
     } else {
-      router.push('/dashboard');
+      router.push('/onboarding');
     }
     setLoading(false);
   };
