@@ -112,39 +112,42 @@ export default function OnboardingPage() {
     setSaving(true);
     setError('');
 
-    const supabase = createClient();
-
-    await supabase.from('user_profiles').update({
-      training_goal: store.goal,
-      experience_level: store.experience,
-      training_age_months: store.trainingAgeMonths,
-      preferred_session_minutes: store.sessionMinutes,
-      available_equipment: `{${store.equipment.join(',')}}`,
-      preferred_split: store.splitPreference === 'no_preference' ? null : store.splitPreference,
-      body_weight: store.bodyWeight,
-      onboarding_completed: true,
-    }).eq('id', user.id);
-
-    // Save priority muscles
-    if (store.priorityMuscles.length > 0) {
-      const { data: muscleGroups } = await supabase
-        .from('muscle_groups').select('id, display_name').in('display_name', store.priorityMuscles);
-      if (muscleGroups) {
-        await supabase.from('user_priority_muscles').insert(
-          muscleGroups.map((mg) => ({ user_id: user.id, muscle_group_id: mg.id, priority_level: 1 }))
-        );
-      }
-    }
-
-    // Save injuries
-    for (const injury of store.injuries) {
-      await supabase.from('user_injuries').insert({
-        user_id: user.id, body_area: injury.bodyArea, severity: injury.severity,
-      });
-    }
-
-    // Generate first program
     try {
+      const supabase = createClient();
+
+      // Save profile
+      const { error: profileError } = await supabase.from('user_profiles').update({
+        training_goal: store.goal,
+        experience_level: store.experience,
+        training_age_months: store.trainingAgeMonths,
+        preferred_session_minutes: store.sessionMinutes,
+        available_equipment: `{${store.equipment.join(',')}}`,
+        preferred_split: store.splitPreference === 'no_preference' ? null : store.splitPreference,
+        body_weight: store.bodyWeight,
+        onboarding_completed: true,
+      }).eq('id', user.id);
+
+      if (profileError) throw new Error('Failed to save profile: ' + profileError.message);
+
+      // Save priority muscles
+      if (store.priorityMuscles.length > 0) {
+        const { data: muscleGroups } = await supabase
+          .from('muscle_groups').select('id, display_name').in('display_name', store.priorityMuscles);
+        if (muscleGroups?.length) {
+          await supabase.from('user_priority_muscles').insert(
+            muscleGroups.map((mg) => ({ user_id: user.id, muscle_group_id: mg.id, priority_level: 1 }))
+          );
+        }
+      }
+
+      // Save injuries
+      for (const injury of store.injuries) {
+        await supabase.from('user_injuries').insert({
+          user_id: user.id, body_area: injury.bodyArea, severity: injury.severity,
+        });
+      }
+
+      // Generate first program
       let splitType: SplitType;
       if (store.splitPreference && store.splitPreference !== 'no_preference') {
         splitType = store.splitPreference as SplitType;
@@ -165,16 +168,17 @@ export default function OnboardingPage() {
         programName: `${store.goal === 'strength' ? 'Strength' : 'Hypertrophy'} Block 1`,
         sessionMinutes: store.sessionMinutes,
       });
+
+      // Show celebration
+      setSaving(false);
+      setShowCelebration(true);
+      store.reset();
     } catch (err: any) {
-      setError('Failed to generate program: ' + (err.message || 'Unknown error'));
+      console.error('Onboarding error:', err);
+      setError(err.message || 'Something went wrong. Please try again.');
       setSaving(false);
       return;
     }
-
-    // Show celebration
-    setSaving(false);
-    setShowCelebration(true);
-    store.reset();
 
     setTimeout(() => {
       router.push('/dashboard');
