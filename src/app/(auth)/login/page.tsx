@@ -40,9 +40,9 @@ export default function LoginPage() {
     <div>
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold tracking-tight">
-          <span className="text-primary">FORGE</span>
+          <span className="text-primary">ADAPTIS</span>
         </h1>
-        <p className="text-sm text-muted-foreground mt-1">Intelligent Lifting Coach</p>
+        <p className="text-sm text-muted-foreground mt-1">Train. Adapt. Become.</p>
       </div>
 
       <Card>

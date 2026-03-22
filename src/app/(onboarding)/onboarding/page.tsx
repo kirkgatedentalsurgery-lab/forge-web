@@ -92,7 +92,7 @@ export default function OnboardingPage() {
       case 1: return !store.goal ? 'Select a goal to continue' : null;
       case 2: return !store.experience ? 'Choose your experience level' : null;
       case 4: return store.equipment.length === 0 ? 'Select at least one equipment type' : null;
-      case 5: return !store.splitPreference ? 'Pick a split or let Forge decide' : null;
+      case 5: return !store.splitPreference ? 'Pick a split or let Adaptis decide' : null;
       default: return null;
     }
   };
@@ -228,7 +228,7 @@ export default function OnboardingPage() {
           <div className="space-y-4">
             <div>
               <h2 className="text-2xl font-bold">What&apos;s your primary goal?</h2>
-              <p className="text-muted-foreground mt-1 text-sm">This shapes how Forge programs your training.</p>
+              <p className="text-muted-foreground mt-1 text-sm">This shapes how Adaptis programs your training.</p>
             </div>
             <div className="space-y-3">
               {GOALS.map((g) => (
@@ -330,7 +330,7 @@ export default function OnboardingPage() {
           <div className="space-y-4">
             <div>
               <h2 className="text-2xl font-bold">Split preference</h2>
-              <p className="text-muted-foreground mt-1 text-sm">Pick a split or let Forge choose for you.</p>
+              <p className="text-muted-foreground mt-1 text-sm">Pick a split or let Adaptis choose for you.</p>
             </div>
             <div className="space-y-3">
               {SPLITS.map((s) => (

@@ -34,7 +34,7 @@ export function Sidebar() {
       {/* Logo */}
       <div className="flex items-center h-16 px-6 border-b border-border">
         <h1 className="text-xl font-bold tracking-tight">
-          <span className="text-primary">FORGE</span>
+          <span className="text-primary">ADAPTIS</span>
         </h1>
       </div>
 

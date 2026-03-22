@@ -53,6 +53,7 @@ interface WorkoutState {
   swapExercise: (exerciseIndex: number, newExerciseId: string, newExerciseName: string) => void;
   undoSet: (exerciseIndex: number, setIndex: number) => void;
   addWarmupSets: (exerciseIndex: number, workingWeight: number) => void;
+  reorderExercise: (fromIndex: number, direction: 'up' | 'down') => void;
 
   startRestTimer: (seconds: number) => void;
   tickRestTimer: () => void;
@@ -122,7 +123,19 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
       const exercises = [...state.exercises];
       const exercise = { ...exercises[exerciseIndex] };
       const sets = [...exercise.sets];
-      sets[setIndex] = { ...sets[setIndex], isCompleted: true };
+      const completedSet = sets[setIndex];
+      sets[setIndex] = { ...completedSet, isCompleted: true };
+
+      // Auto-fill next set's weight, reps, and RIR if they're empty
+      const nextIdx = setIndex + 1;
+      if (nextIdx < sets.length && !sets[nextIdx].isCompleted) {
+        const next = { ...sets[nextIdx] };
+        if (next.weight === null && completedSet.weight !== null) next.weight = completedSet.weight;
+        if (next.reps === null && completedSet.reps !== null) next.reps = completedSet.reps;
+        if (next.rir === null && completedSet.rir !== null) next.rir = completedSet.rir;
+        sets[nextIdx] = next;
+      }
+
       exercise.sets = sets;
       exercises[exerciseIndex] = exercise;
       return { exercises };
@@ -140,8 +153,8 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
           setNumber: exercise.sets.length + 1,
           setType: 'working',
           weight: lastSet?.weight ?? null,
-          reps: null,
-          rir: null,
+          reps: lastSet?.isCompleted ? lastSet.reps : null,
+          rir: lastSet?.isCompleted ? lastSet.rir : null,
           isCompleted: false,
           painFlag: false,
         },
@@ -240,6 +253,20 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
       exercise.sets = allSets;
       exercises[exerciseIndex] = exercise;
       return { exercises };
+    });
+  },
+
+  reorderExercise: (fromIndex, direction) => {
+    set((state) => {
+      const toIndex = direction === 'up' ? fromIndex - 1 : fromIndex + 1;
+      if (toIndex < 0 || toIndex >= state.exercises.length) return state;
+      const exercises = [...state.exercises];
+      [exercises[fromIndex], exercises[toIndex]] = [exercises[toIndex], exercises[fromIndex]];
+      // Update currentExerciseIndex if affected
+      let newCurrent = state.currentExerciseIndex;
+      if (state.currentExerciseIndex === fromIndex) newCurrent = toIndex;
+      else if (state.currentExerciseIndex === toIndex) newCurrent = fromIndex;
+      return { exercises, currentExerciseIndex: newCurrent };
     });
   },
 

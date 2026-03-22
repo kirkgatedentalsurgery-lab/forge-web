@@ -38,9 +38,9 @@ export function E1rmChart({ data, title = 'Estimated 1RM Trend' }: E1rmChartProp
               <Line
                 type="monotone"
                 dataKey="e1rm"
-                stroke="#E63946"
+                stroke="#2E6FBB"
                 strokeWidth={2}
-                dot={{ fill: '#E63946', r: 3 }}
+                dot={{ fill: '#2E6FBB', r: 3 }}
                 activeDot={{ r: 5 }}
               />
             </LineChart>

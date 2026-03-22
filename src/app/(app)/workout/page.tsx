@@ -16,7 +16,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
-import { formatDuration } from '@/lib/utils';
+import { cn, formatDuration } from '@/lib/utils';
 import {
   Dumbbell, ChevronLeft, ChevronRight, Loader2, X, Play,
 } from 'lucide-react';
@@ -305,10 +305,10 @@ export default function WorkoutPage() {
 
   // === ACTIVE WORKOUT ===
   if (store.isActive && store.exercises.length > 0) {
-    const current = store.exercises[store.currentExerciseIndex];
     const totalSets = store.exercises.reduce((c, e) => c + e.sets.length, 0);
     const completedSets = store.exercises.reduce((c, e) => c + e.sets.filter((s) => s.isCompleted).length, 0);
-    const currentSetIndex = current?.sets.findIndex((s) => !s.isCompleted) ?? -1;
+    const [expandedExercise, setExpandedExercise] = useState<number>(0);
+    const [swapExerciseIdx, setSwapExerciseIdx] = useState<number>(0);
 
     return (
       <div className="max-w-2xl mx-auto pb-32">
@@ -318,7 +318,7 @@ export default function WorkoutPage() {
             <div>
               <h1 className="text-lg font-bold">{todayWorkout?.dayLabel || 'Workout'}</h1>
               <p className="text-xs text-muted-foreground">
-                Ex {store.currentExerciseIndex + 1}/{store.exercises.length} · Wk{todayWorkout?.weekNumber} · {elapsed}
+                {completedSets}/{totalSets} sets · Wk{todayWorkout?.weekNumber} · {elapsed}
               </p>
             </div>
             <Badge variant="secondary" className="tabular-nums text-sm">{elapsed}</Badge>
@@ -326,85 +326,112 @@ export default function WorkoutPage() {
           <Progress value={(completedSets / totalSets) * 100} className="h-1 mt-2" />
         </div>
 
-        <div className="p-4 space-y-4">
-          {/* Current exercise */}
-          {current && (
-            <div>
-              <div className="mb-3 flex items-start justify-between">
-                <div>
-                  <h2 className="text-xl font-bold">{current.exerciseName}</h2>
-                  <p className="text-sm text-muted-foreground">
-                    {current.targetSets} sets × {current.targetRepsMin}-{current.targetRepsMax} reps · RIR {current.targetRir}
-                    {current.previousBest && ` · Prev: ${current.previousBest}`}
-                  </p>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-xs text-muted-foreground shrink-0"
-                  onClick={() => setShowSwap(true)}>
-                  Swap
-                </Button>
-              </div>
+        <div className="p-4 space-y-3">
+          {/* All exercises */}
+          {store.exercises.map((exercise, exIdx) => {
+            const isExpanded = expandedExercise === exIdx;
+            const exCompletedSets = exercise.sets.filter((s) => s.isCompleted).length;
+            const currentSetIndex = exercise.sets.findIndex((s) => !s.isCompleted);
+            const prevWeight = exercise.previousBest ? parseFloat(exercise.previousBest.split('×')[0]) : 0;
+            const prevReps = exercise.previousBest ? parseInt(exercise.previousBest.split('×')[1]) : 0;
 
-              {/* Warm-up generator */}
-              {current.sets.every((s) => s.setType !== 'warmup') && current.targetWeight && (
-                <Button
-                  variant="ghost" size="sm" className="w-full mb-2 text-muted-foreground"
-                  onClick={() => store.addWarmupSets(store.currentExerciseIndex, current.targetWeight!)}>
-                  + Add Warm-Up Ramp
-                </Button>
-              )}
+            return (
+              <Card key={`${exercise.exerciseId}-${exIdx}`} className={cn(
+                'transition-colors overflow-hidden',
+                isExpanded && 'border-primary',
+                exCompletedSets === exercise.sets.length && exCompletedSets > 0 && 'opacity-70'
+              )}>
+                {/* Exercise header — always visible */}
+                <button
+                  className="w-full px-4 py-3 flex items-center justify-between"
+                  onClick={() => setExpandedExercise(isExpanded ? -1 : exIdx)}>
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className="text-sm font-bold text-primary w-5 shrink-0">{exIdx + 1}</span>
+                    <div className="text-left min-w-0">
+                      <p className="text-sm font-semibold truncate">{exercise.exerciseName}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {exCompletedSets}/{exercise.sets.length} sets
+                        {exercise.previousBest && ` · Prev: ${exercise.previousBest}`}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    {/* Reorder buttons */}
+                    <button
+                      className="p-1 text-muted-foreground hover:text-foreground disabled:opacity-30"
+                      disabled={exIdx === 0}
+                      onClick={(e) => { e.stopPropagation(); store.reorderExercise(exIdx, 'up'); setExpandedExercise(exIdx - 1); }}>
+                      <ChevronLeft className="h-4 w-4 rotate-90" />
+                    </button>
+                    <button
+                      className="p-1 text-muted-foreground hover:text-foreground disabled:opacity-30"
+                      disabled={exIdx === store.exercises.length - 1}
+                      onClick={(e) => { e.stopPropagation(); store.reorderExercise(exIdx, 'down'); setExpandedExercise(exIdx + 1); }}>
+                      <ChevronRight className="h-4 w-4 rotate-90" />
+                    </button>
+                    {isExpanded
+                      ? <ChevronLeft className="h-4 w-4 rotate-90 text-primary" />
+                      : <ChevronRight className="h-4 w-4 -rotate-90 text-muted-foreground" />}
+                  </div>
+                </button>
 
-              {/* Sets */}
-              {current.sets.map((set, setIdx) => {
-                // PR detection: weight × reps exceeds previous best volume
-                const prevWeight = current.previousBest ? parseFloat(current.previousBest.split('×')[0]) : 0;
-                const prevReps = current.previousBest ? parseInt(current.previousBest.split('×')[1]) : 0;
-                const isPR = set.isCompleted && set.setType === 'working' &&
-                  (set.weight ?? 0) * (set.reps ?? 0) > prevWeight * prevReps && prevWeight > 0;
+                {/* Expanded: sets + controls */}
+                {isExpanded && (
+                  <div className="px-4 pb-4 space-y-2 border-t border-border pt-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-xs text-muted-foreground">
+                        {exercise.targetSets} sets × {exercise.targetRepsMin}-{exercise.targetRepsMax} reps · RIR {exercise.targetRir}
+                      </p>
+                      <Button
+                        variant="ghost" size="sm"
+                        className="text-xs text-muted-foreground h-7"
+                        onClick={() => { setSwapExerciseIdx(exIdx); setShowSwap(true); }}>
+                        Swap
+                      </Button>
+                    </div>
 
-                return (
-                  <SetRow
-                    key={setIdx}
-                    set={set}
-                    isCurrent={setIdx === currentSetIndex}
-                    targetRepsMin={current.targetRepsMin}
-                    targetRepsMax={current.targetRepsMax}
-                    unit={unit}
-                    previousBest={prevWeight > 0 ? { weight: prevWeight, reps: prevReps } : null}
-                    isPR={isPR}
-                    onUpdate={(data) => store.logSet(store.currentExerciseIndex, setIdx, data)}
-                    onComplete={() => handleCompleteSet(store.currentExerciseIndex, setIdx)}
-                    onUndo={set.isCompleted ? () => store.undoSet(store.currentExerciseIndex, setIdx) : undefined}
-                    onTogglePain={() => store.togglePainFlag(store.currentExerciseIndex, setIdx)}
-                  />
-                );
-              })}
+                    {/* Warm-up generator */}
+                    {exercise.sets.every((s) => s.setType !== 'warmup') && exercise.targetWeight && (
+                      <Button
+                        variant="ghost" size="sm" className="w-full mb-1 text-muted-foreground"
+                        onClick={() => store.addWarmupSets(exIdx, exercise.targetWeight!)}>
+                        + Add Warm-Up Ramp
+                      </Button>
+                    )}
 
-              <Button
-                variant="ghost" size="sm" className="w-full mt-1 text-muted-foreground"
-                onClick={() => store.addSet(store.currentExerciseIndex)}>
-                + Add Set
-              </Button>
-            </div>
-          )}
+                    {/* Sets */}
+                    {exercise.sets.map((set, setIdx) => {
+                      const isPR = set.isCompleted && set.setType === 'working' &&
+                        (set.weight ?? 0) * (set.reps ?? 0) > prevWeight * prevReps && prevWeight > 0;
 
-          {/* Exercise nav */}
-          <div className="flex gap-2">
-            <Button
-              variant="outline" className="flex-1"
-              disabled={store.currentExerciseIndex === 0}
-              onClick={() => store.setCurrentExercise(store.currentExerciseIndex - 1)}>
-              <ChevronLeft className="h-4 w-4 mr-1" /> Prev
-            </Button>
-            <Button
-              variant="outline" className="flex-1"
-              disabled={store.currentExerciseIndex === store.exercises.length - 1}
-              onClick={() => store.setCurrentExercise(store.currentExerciseIndex + 1)}>
-              Next <ChevronRight className="h-4 w-4 ml-1" />
-            </Button>
-          </div>
+                      return (
+                        <SetRow
+                          key={setIdx}
+                          set={set}
+                          isCurrent={setIdx === currentSetIndex}
+                          targetRepsMin={exercise.targetRepsMin}
+                          targetRepsMax={exercise.targetRepsMax}
+                          unit={unit}
+                          previousBest={prevWeight > 0 ? { weight: prevWeight, reps: prevReps } : null}
+                          isPR={isPR}
+                          onUpdate={(data) => store.logSet(exIdx, setIdx, data)}
+                          onComplete={() => handleCompleteSet(exIdx, setIdx)}
+                          onUndo={set.isCompleted ? () => store.undoSet(exIdx, setIdx) : undefined}
+                          onTogglePain={() => store.togglePainFlag(exIdx, setIdx)}
+                        />
+                      );
+                    })}
+
+                    <Button
+                      variant="ghost" size="sm" className="w-full mt-1 text-muted-foreground"
+                      onClick={() => store.addSet(exIdx)}>
+                      + Add Set
+                    </Button>
+                  </div>
+                )}
+              </Card>
+            );
+          })}
 
           {/* Session notes */}
           <div className="pt-2">
@@ -442,17 +469,15 @@ export default function WorkoutPage() {
           </DialogContent>
         </Dialog>
 
-        {current && (
-          <SubstitutionDialog
-            open={showSwap}
-            onOpenChange={setShowSwap}
-            exerciseId={current.exerciseId}
-            exerciseName={current.exerciseName}
-            onSelect={(newId, newName) => {
-              store.swapExercise(store.currentExerciseIndex, newId, newName);
-            }}
-          />
-        )}
+        <SubstitutionDialog
+          open={showSwap}
+          onOpenChange={setShowSwap}
+          exerciseId={store.exercises[swapExerciseIdx]?.exerciseId || ''}
+          exerciseName={store.exercises[swapExerciseIdx]?.exerciseName || ''}
+          onSelect={(newId, newName) => {
+            store.swapExercise(swapExerciseIdx, newId, newName);
+          }}
+        />
       </div>
     );
   }

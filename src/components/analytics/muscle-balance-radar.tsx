@@ -59,8 +59,8 @@ export function MuscleBalanceRadar({ data }: MuscleBalanceRadarProps) {
               />
               <Radar
                 dataKey="value"
-                stroke="#E63946"
-                fill="#E63946"
+                stroke="#2E6FBB"
+                fill="#2E6FBB"
                 fillOpacity={0.2}
                 strokeWidth={2}
               />

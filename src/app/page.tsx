@@ -16,13 +16,10 @@ export default async function Home() {
       {/* Hero */}
       <div className="flex flex-col items-center justify-center min-h-[70vh] px-6 text-center">
         <h1 className="text-5xl sm:text-7xl font-extrabold tracking-tighter mb-4">
-          <span className="text-primary">FORGE</span>
+          <span className="text-primary">ADAPTIS</span>
         </h1>
-        <p className="text-lg sm:text-xl text-muted-foreground font-medium mb-2">
-          Intelligent Lifting Coach
-        </p>
         <p className="text-2xl sm:text-3xl font-semibold tracking-tight uppercase mb-10">
-          BE THE PERSON YOU WANT TO BE
+          TRAIN. ADAPT. BECOME.
         </p>
 
         <div className="flex gap-4">

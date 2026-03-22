@@ -74,7 +74,7 @@ export default function ProgramsPage() {
           </div>
           <h2 className="text-xl font-semibold mb-2">No Programs Yet</h2>
           <p className="text-muted-foreground mb-6 max-w-sm">
-            Create your first training program to get started with Forge.
+            Create your first training program to get started with Adaptis.
           </p>
           <Link href="/programs/create">
             <Button>Create Program</Button>

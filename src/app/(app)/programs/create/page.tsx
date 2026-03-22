@@ -80,7 +80,7 @@ export default function CreateProgramPage() {
         <div className="space-y-4">
           <div>
             <h2 className="text-lg font-semibold">How do you want to train?</h2>
-            <p className="text-sm text-muted-foreground">Choose how much control Forge has over your programming.</p>
+            <p className="text-sm text-muted-foreground">Choose how much control Adaptis has over your programming.</p>
           </div>
           <ModeSelector value={trainingMode} onChange={setTrainingMode} />
           <Button

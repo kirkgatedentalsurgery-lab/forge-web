@@ -12,7 +12,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'Forge — Intelligent Lifting Coach',
+  title: 'ADAPTIS — Train. Adapt. Become.',
   description: 'Smart programming, autoregulation, and elite logging for serious lifters.',
 };
 
@@ -25,7 +25,7 @@ export default function RootLayout({
     <html lang="en" className={`${inter.variable} h-full`} suppressHydrationWarning>
       <head>
         <link rel="manifest" href="/manifest.json" />
-        <meta name="theme-color" content="#E63946" />
+        <meta name="theme-color" content="#2E6FBB" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
       </head>

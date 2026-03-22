@@ -1,11 +1,11 @@
 {
-  "name": "Forge — Intelligent Lifting Coach",
-  "short_name": "Forge",
+  "name": "ADAPTIS — Train. Adapt. Become.",
+  "short_name": "ADAPTIS",
   "description": "Smart programming, autoregulation, and elite logging for serious lifters.",
   "start_url": "/dashboard",
   "display": "standalone",
   "background_color": "#0A0A0F",
-  "theme_color": "#E63946",
+  "theme_color": "#2E6FBB",
   "orientation": "portrait",
   "icons": [
     {

@@ -50,15 +50,15 @@ export default function RegisterPage() {
     <div>
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold tracking-tight">
-          <span className="text-primary">FORGE</span>
+          <span className="text-primary">ADAPTIS</span>
         </h1>
-        <p className="text-sm text-muted-foreground mt-1">Start your training journey</p>
+        <p className="text-sm text-muted-foreground mt-1">Train. Adapt. Become.</p>
       </div>
 
       <Card>
         <CardHeader>
           <CardTitle>Create Account</CardTitle>
-          <CardDescription>Set up your Forge account</CardDescription>
+          <CardDescription>Set up your Adaptis account</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
