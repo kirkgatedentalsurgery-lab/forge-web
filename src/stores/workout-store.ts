@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { createClient } from '@/lib/supabase/client';
+import { calculateOverload } from '@/engines/progressive-overload';
 
 export interface ActiveSet {
   setNumber: number;
@@ -14,6 +15,7 @@ export interface ActiveSet {
 export interface ActiveExercise {
   exerciseId: string;
   exerciseName: string;
+  isCompound?: boolean;
   orderIndex: number;
   targetSets: number;
   targetRepsMin: number;
@@ -370,6 +372,30 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
           e1rm,
           source: 'calculated',
         });
+      }
+
+      // Progressive overload: calculate next session's weight
+      const workingSets = completedSets.filter((s) => s.setType === 'working');
+      if (workingSets.length > 0 && state.programDayId) {
+        const decision = calculateOverload({
+          exerciseId: exercise.exerciseId,
+          exerciseName: exercise.exerciseName,
+          isCompound: exercise.isCompound ?? true,
+          completedSets: workingSets.map((s) => ({
+            weight: s.weight!, reps: s.reps!, rir: s.rir ?? 2,
+          })),
+          targetRepsMin: exercise.targetRepsMin,
+          targetRepsMax: exercise.targetRepsMax,
+          targetRir: exercise.targetRir ?? 2,
+          currentWeight: workingSets[0].weight!,
+        });
+
+        if (decision.newWeight) {
+          await supabase.from('program_exercises')
+            .update({ target_weight: decision.newWeight })
+            .eq('exercise_id', exercise.exerciseId)
+            .eq('program_day_id', state.programDayId);
+        }
       }
     }
 

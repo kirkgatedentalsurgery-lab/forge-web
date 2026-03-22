@@ -111,6 +111,7 @@ export default function WorkoutPage() {
       return {
         exerciseId: pe.exercise_id,
         exerciseName: pe.exercise?.name || 'Unknown',
+        isCompound: pe.exercise?.is_compound ?? true,
         orderIndex: pe.order_index,
         targetSets: pe.target_sets,
         targetRepsMin: pe.target_reps_min,
@@ -511,6 +512,12 @@ export default function WorkoutPage() {
                     {ex.targetSets}×{ex.targetRepsMin}-{ex.targetRepsMax}
                     {ex.targetWeight ? ` · ${ex.targetWeight} ${unit}` : ''}
                     {ex.previousBest ? ` · Prev: ${ex.previousBest}` : ''}
+                    {ex.targetWeight && ex.previousBest && (() => {
+                      const prevW = parseFloat(ex.previousBest.split('×')[0]);
+                      if (ex.targetWeight! > prevW) return <span className="text-green-400 ml-1">↑ +{(ex.targetWeight! - prevW).toFixed(1)}</span>;
+                      if (ex.targetWeight! < prevW) return <span className="text-yellow-400 ml-1">↓ {(ex.targetWeight! - prevW).toFixed(1)}</span>;
+                      return null;
+                    })()}
                   </p>
                 </div>
               </div>
