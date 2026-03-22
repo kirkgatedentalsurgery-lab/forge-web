@@ -305,7 +305,7 @@ export default function ProgramDetailPage() {
                   ) : (
                     <div key={ex.id} className="flex items-center justify-between py-2 border-b border-border last:border-0 group">
                       <div className="flex items-center gap-2">
-                        <div className="flex flex-col opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex flex-col">
                           <button className="text-muted-foreground hover:text-foreground h-4" disabled={exIdx === 0}
                             onClick={() => handleMoveExercise(day.id, ex.id, 'up')}>
                             <ChevronUp className="h-3.5 w-3.5" />
@@ -326,7 +326,7 @@ export default function ProgramDetailPage() {
                         {ex.exercise?.is_compound && (
                           <Badge variant="secondary" className="text-xs">Compound</Badge>
                         )}
-                        <Button variant="ghost" size="sm" className="h-7 px-2 text-xs opacity-0 group-hover:opacity-100"
+                        <Button variant="ghost" size="sm" className="h-7 px-2 text-xs"
                           onClick={() => {
                             setEditingExercise(ex.id);
                             setEditValues({ sets: ex.target_sets, repsMin: ex.target_reps_min, repsMax: ex.target_reps_max });
