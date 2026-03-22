@@ -53,7 +53,9 @@ export async function generateProgram(
 
   const muscleMap = new Map(muscleGroups.map((mg) => [mg.name, mg]));
 
-  const daySchedule = resolveDaySchedule(input.splitType, input.daysPerWeek);
+  const daySchedule = input.customDaySchedule && input.customDaySchedule.length > 0
+    ? input.customDaySchedule
+    : resolveDaySchedule(input.splitType, input.daysPerWeek);
   if (daySchedule.length === 0) {
     throw new Error('Could not resolve day schedule for this split type');
   }

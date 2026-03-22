@@ -18,6 +18,7 @@ import { Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { ModeSelector, TrainingMode } from '@/components/programs/mode-selector';
 import { StrengthSetup, StrengthLifts } from '@/components/programs/strength-setup';
 import { ExercisePicker, SelectedExercise } from '@/components/programs/exercise-picker';
+import { CustomSplitDesigner } from '@/components/programs/custom-split-designer';
 import { useUserProfile } from '@/hooks/use-user-profile';
 import { resolveDaySchedule } from '@/engines/split-templates';
 
@@ -36,6 +37,7 @@ export default function CreateProgramPage() {
   const [error, setError] = useState('');
   const [strengthLifts, setStrengthLifts] = useState<StrengthLifts>({ squat: null, bench: null, deadlift: null, ohp: null });
   const [builderExercises, setBuilderExercises] = useState<Map<number, SelectedExercise[]>>(new Map());
+  const [customDays, setCustomDays] = useState<{ label: string; muscles: string[] }[]>([]);
 
   const handleGenerate = async () => {
     if (!user || !splitType || !daysPerWeek) return;
@@ -59,6 +61,7 @@ export default function CreateProgramPage() {
         userId: user.id,
         programName: name.trim(),
         sessionMinutes,
+        customDaySchedule: splitType === 'custom' ? customDays : undefined,
       });
 
       router.push('/programs');
@@ -216,7 +219,19 @@ export default function CreateProgramPage() {
             <Button variant="outline" onClick={() => setStep(2)} className="flex-1">
               <ChevronLeft className="h-4 w-4 mr-1" /> Back
             </Button>
-            {trainingMode === 'builder' ? (
+            {splitType === 'custom' ? (
+              <Button onClick={() => {
+                // Initialize custom days if needed
+                if (customDays.length !== daysPerWeek) {
+                  setCustomDays(Array.from({ length: daysPerWeek }, () => ({
+                    label: '', muscles: [],
+                  })));
+                }
+                setStep(6);
+              }} className="flex-1" disabled={!daysPerWeek}>
+                Next <ChevronRight className="h-4 w-4 ml-1" />
+              </Button>
+            ) : trainingMode === 'builder' ? (
               <Button onClick={() => setStep(4)} className="flex-1" disabled={!daysPerWeek}>
                 Next <ChevronRight className="h-4 w-4 ml-1" />
               </Button>
@@ -241,10 +256,10 @@ export default function CreateProgramPage() {
             <p className="text-sm text-muted-foreground">Select exercises for each training day.</p>
           </div>
 
-          {resolveDaySchedule(splitType, daysPerWeek).map((day, i) => (
+          {(splitType === 'custom' ? customDays : resolveDaySchedule(splitType!, daysPerWeek)).map((day, i) => (
             <ExercisePicker
               key={i}
-              dayLabel={day.label}
+              dayLabel={day.label || `Day ${i + 1}`}
               targetMuscles={day.muscles}
               selected={builderExercises.get(i) || []}
               onChange={(exercises) => {
@@ -278,6 +293,41 @@ export default function CreateProgramPage() {
             <Button onClick={handleGenerate} className="flex-1" disabled={generating}>
               {generating ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Generating...</> : 'Generate Program'}
             </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Step 6: Custom Split Designer */}
+      {step === 6 && splitType === 'custom' && (
+        <div className="space-y-4">
+          <div>
+            <h2 className="text-lg font-semibold">Design Your Split</h2>
+            <p className="text-sm text-muted-foreground">Name each day and assign muscle groups.</p>
+          </div>
+
+          <CustomSplitDesigner days={customDays} onChange={setCustomDays} />
+
+          {error && <p className="text-sm text-destructive text-center">{error}</p>}
+
+          <div className="flex gap-3">
+            <Button variant="outline" onClick={() => setStep(3)} className="flex-1">
+              <ChevronLeft className="h-4 w-4 mr-1" /> Back
+            </Button>
+            {trainingMode === 'builder' ? (
+              <Button
+                onClick={() => setStep(4)}
+                className="flex-1"
+                disabled={customDays.some((d) => d.muscles.length === 0)}>
+                Next <ChevronRight className="h-4 w-4 ml-1" />
+              </Button>
+            ) : (
+              <Button
+                onClick={handleGenerate}
+                className="flex-1"
+                disabled={customDays.some((d) => d.muscles.length === 0) || generating}>
+                {generating ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Generating...</> : 'Generate Program'}
+              </Button>
+            )}
           </div>
         </div>
       )}

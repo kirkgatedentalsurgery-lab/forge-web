@@ -37,6 +37,7 @@ export interface GenerateProgramInput {
   userId: string;
   programName: string;
   sessionMinutes?: number; // target session length (30-120)
+  customDaySchedule?: { label: string; muscles: string[] }[];
 }
 
 export interface ReadinessInput {
