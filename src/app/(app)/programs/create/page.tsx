@@ -49,7 +49,7 @@ export default function CreateProgramPage() {
       await supabase.from('programs').update({ status: 'paused' })
         .eq('user_id', user.id).eq('status', 'active');
 
-      const result = await generateProgram(supabase, {
+      await generateProgram(supabase, {
         splitType,
         daysPerWeek,
         numWeeks,
@@ -84,16 +84,10 @@ export default function CreateProgramPage() {
           </div>
           <ModeSelector value={trainingMode} onChange={setTrainingMode} />
           <Button
-            onClick={() => {
-              if (trainingMode === 'manual') {
-                router.push('/dashboard');
-              } else {
-                setStep(1);
-              }
-            }}
+            onClick={() => setStep(1)}
             className="w-full"
             disabled={!trainingMode}>
-            {trainingMode === 'manual' ? 'Go to Dashboard' : <>Next <ChevronRight className="h-4 w-4 ml-1" /></>}
+            Next <ChevronRight className="h-4 w-4 ml-1" />
           </Button>
         </div>
       )}

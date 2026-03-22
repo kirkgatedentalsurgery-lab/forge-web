@@ -3,9 +3,9 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { Bot, Compass, Hammer, PenLine } from 'lucide-react';
+import { Bot, Hammer } from 'lucide-react';
 
-export type TrainingMode = 'coach' | 'guided' | 'builder' | 'manual';
+export type TrainingMode = 'coach' | 'builder';
 
 interface ModeSelectorProps {
   value: TrainingMode | null;
@@ -16,29 +16,15 @@ const MODES = [
   {
     value: 'coach' as const,
     label: 'Coach Mode',
-    description: 'Adaptis decides everything — split, exercises, progression. Just show up and train.',
+    description: 'Adaptis picks your exercises, sets, reps, and progression. Just show up and train.',
     icon: Bot,
     recommended: true,
   },
   {
-    value: 'guided' as const,
-    label: 'Guided Mode',
-    description: 'Adaptis creates the plan, but you can swap exercises from approved substitutes.',
-    icon: Compass,
-    recommended: false,
-  },
-  {
     value: 'builder' as const,
     label: 'Builder Mode',
-    description: 'You pick the split and exercises. Adaptis handles sets, reps, and progression.',
+    description: 'You choose your exercises for each day. Adaptis handles sets, reps, and progression.',
     icon: Hammer,
-    recommended: false,
-  },
-  {
-    value: 'manual' as const,
-    label: 'Manual Mode',
-    description: 'Log your own workouts freely. Adaptis provides analytics but no programming.',
-    icon: PenLine,
     recommended: false,
   },
 ];
