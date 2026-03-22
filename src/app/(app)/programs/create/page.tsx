@@ -61,7 +61,7 @@ export default function CreateProgramPage() {
         sessionMinutes,
       });
 
-      router.push(`/programs/${result.programId}`);
+      router.push('/programs');
     } catch (err: any) {
       setError(err.message || 'Failed to generate program');
     } finally {

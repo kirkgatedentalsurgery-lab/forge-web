@@ -11,22 +11,51 @@ import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
-import { ChevronDown, ChevronRight, ChevronUp, Trash2, Loader2 } from 'lucide-react';
+import { ChevronDown, ChevronRight, ChevronUp, Trash2, Loader2, Play, Pause, Power } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SPLIT_INFO } from '@/lib/constants';
+import { useAuth } from '@/providers/auth-provider';
+import Link from 'next/link';
 
 export default function ProgramDetailPage() {
   const { programId } = useParams<{ programId: string }>();
   const router = useRouter();
+  const { user } = useAuth();
   const [program, setProgram] = useState<any>(null);
   const [weeks, setWeeks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activating, setActivating] = useState(false);
   const [expandedWeek, setExpandedWeek] = useState(1);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [deleting, setDeleting] = useState(false);
   const [editingExercise, setEditingExercise] = useState<string | null>(null);
   const [editValues, setEditValues] = useState<{ sets: number; repsMin: number; repsMax: number }>({ sets: 3, repsMin: 8, repsMax: 12 });
+
+  const handleActivate = async () => {
+    if (!user || !programId) return;
+    setActivating(true);
+    const supabase = createClient();
+    // Pause all other active programs
+    await supabase.from('programs').update({ status: 'paused' })
+      .eq('user_id', user.id).eq('status', 'active');
+    // Activate this one
+    await supabase.from('programs').update({
+      status: 'active',
+      started_at: new Date().toISOString(),
+    }).eq('id', programId);
+    setProgram((prev: any) => prev ? { ...prev, status: 'active' } : prev);
+    setActivating(false);
+  };
+
+  const handlePause = async () => {
+    if (!programId) return;
+    setActivating(true);
+    const supabase = createClient();
+    await supabase.from('programs').update({ status: 'paused' }).eq('id', programId);
+    setProgram((prev: any) => prev ? { ...prev, status: 'paused' } : prev);
+    setActivating(false);
+  };
 
   const handleSaveExercise = async (exerciseRowId: string) => {
     const supabase = createClient();
@@ -186,6 +215,29 @@ export default function ProgramDetailPage() {
           </Badge>
         </div>
       </div>
+
+      {/* Action buttons */}
+      {program.status === 'active' ? (
+        <div className="flex gap-3">
+          <Link href="/workout" className="flex-1">
+            <Button className="w-full h-12 text-sm font-bold uppercase tracking-wider">
+              <Play className="h-4 w-4 mr-2" /> Start Workout
+            </Button>
+          </Link>
+          <Button variant="outline" className="h-12" onClick={handlePause} disabled={activating}>
+            <Pause className="h-4 w-4" />
+          </Button>
+        </div>
+      ) : program.status === 'paused' ? (
+        <Button className="w-full h-12 text-sm font-bold uppercase tracking-wider" onClick={handleActivate} disabled={activating}>
+          {activating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Power className="h-4 w-4 mr-2" />}
+          Activate Program
+        </Button>
+      ) : program.status === 'completed' ? (
+        <div className="text-center text-sm text-muted-foreground py-2">
+          This program has been completed.
+        </div>
+      ) : null}
 
       {weeks.map((week) => (
         <div key={week.id}>

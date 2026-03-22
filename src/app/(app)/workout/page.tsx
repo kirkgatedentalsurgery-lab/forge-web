@@ -63,11 +63,13 @@ export default function WorkoutPage() {
     if (!user || store.isActive) { setLoading(false); return; }
 
     const supabase = createClient();
-    const { data: program } = await supabase
+    const { data: programs } = await supabase
       .from('programs')
       .select('id, name, current_week, current_day')
-      .eq('user_id', user.id).eq('status', 'active').single();
+      .eq('user_id', user.id).eq('status', 'active')
+      .limit(1);
 
+    const program = programs?.[0];
     if (!program) { setTodayWorkout(null); setLoading(false); return; }
 
     const { data: week } = await supabase
