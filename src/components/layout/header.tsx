@@ -16,8 +16,8 @@ export function Header({ title }: HeaderProps) {
   return (
     <header className="sticky top-0 z-40 flex items-center justify-between h-14 px-4 lg:px-6 bg-background/80 backdrop-blur-sm border-b border-border">
       <div className="flex items-center gap-3">
-        <h1 className="lg:hidden text-lg font-bold tracking-tight">
-          <span className="text-primary">ADAPTIS</span>
+        <h1 className="lg:hidden text-lg font-bold tracking-[0.1em]">
+          <span className="bg-gradient-to-r from-[#7EC8E3] to-[#2E6FBB] bg-clip-text text-transparent">ADAPTIS</span>
         </h1>
         {title && (
           <h2 className="hidden lg:block text-lg font-semibold">{title}</h2>

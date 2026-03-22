@@ -33,8 +33,8 @@ export function Sidebar() {
     <aside className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0 border-r border-border bg-card">
       {/* Logo */}
       <div className="flex items-center h-16 px-6 border-b border-border">
-        <h1 className="text-xl font-bold tracking-tight">
-          <span className="text-primary">ADAPTIS</span>
+        <h1 className="text-xl font-bold tracking-[0.12em]">
+          <span className="bg-gradient-to-r from-[#7EC8E3] to-[#2E6FBB] bg-clip-text text-transparent">ADAPTIS</span>
         </h1>
       </div>
 

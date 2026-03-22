@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useAuth } from '@/providers/auth-provider';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -39,10 +40,11 @@ export default function LoginPage() {
   return (
     <div>
       <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold tracking-tight">
-          <span className="text-primary">ADAPTIS</span>
+        <Image src="/logo.png" alt="ADAPTIS" width={80} height={80} className="mx-auto mb-3" />
+        <h1 className="text-3xl font-bold tracking-[0.12em]">
+          <span className="bg-gradient-to-b from-[#7EC8E3] to-[#2E6FBB] bg-clip-text text-transparent">ADAPTIS</span>
         </h1>
-        <p className="text-sm text-muted-foreground mt-1">Train. Adapt. Become.</p>
+        <p className="text-sm text-muted-foreground mt-1 tracking-[0.15em] font-light">Train. Adapt. Become.</p>
       </div>
 
       <Card>
