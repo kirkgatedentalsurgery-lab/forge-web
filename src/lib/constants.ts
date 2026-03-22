@@ -29,17 +29,19 @@ export function calculateMaxSets(sessionMinutes: number): number {
  * Calculate maximum exercises for a given session duration.
  */
 export function calculateMaxExercises(sessionMinutes: number): number {
-  const maxSets = calculateMaxSets(sessionMinutes);
-  // Average ~3 sets per exercise
-  return Math.max(2, Math.ceil(maxSets / 3));
+  if (sessionMinutes <= 30) return 3;
+  if (sessionMinutes <= 45) return 4;
+  if (sessionMinutes <= 60) return 5;
+  if (sessionMinutes <= 75) return 6;
+  return 7;
 }
 
 // Session duration presets
 export const SESSION_PRESETS = [
-  { value: 30, label: '30 min', description: 'Quick session — 2-3 exercises' },
-  { value: 45, label: '45 min', description: 'Standard — 3-4 exercises' },
-  { value: 60, label: '60 min', description: 'Full session — 4-5 exercises' },
-  { value: 90, label: '90 min', description: 'Extended — 6-8 exercises' },
+  { value: 30, label: '30 min', description: 'Quick session — 3 exercises' },
+  { value: 45, label: '45 min', description: 'Standard — 4 exercises' },
+  { value: 60, label: '60 min', description: 'Full session — 5 exercises' },
+  { value: 90, label: '90 min', description: 'Extended — 7 exercises' },
 ] as const;
 
 // Weight increments in lbs
