@@ -41,6 +41,8 @@ export default function WorkoutPage() {
   const [finishing, setFinishing] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
   const [showSwap, setShowSwap] = useState(false);
+  const [expandedExercise, setExpandedExercise] = useState<number>(0);
+  const [swapExerciseIdx, setSwapExerciseIdx] = useState<number>(0);
 
   // Elapsed timer
   const [elapsed, setElapsed] = useState('0:00');
@@ -307,9 +309,6 @@ export default function WorkoutPage() {
   if (store.isActive && store.exercises.length > 0) {
     const totalSets = store.exercises.reduce((c, e) => c + e.sets.length, 0);
     const completedSets = store.exercises.reduce((c, e) => c + e.sets.filter((s) => s.isCompleted).length, 0);
-    const [expandedExercise, setExpandedExercise] = useState<number>(0);
-    const [swapExerciseIdx, setSwapExerciseIdx] = useState<number>(0);
-
     return (
       <div className="max-w-2xl mx-auto pb-32">
         {/* Header */}
