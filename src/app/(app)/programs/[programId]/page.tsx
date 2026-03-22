@@ -11,10 +11,11 @@ import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
-import { ChevronDown, ChevronRight, ChevronUp, Trash2, Loader2, Play, Pause, Power } from 'lucide-react';
+import { ChevronDown, ChevronRight, ChevronUp, Trash2, Loader2, Play, Pause, Power, ArrowLeftRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SPLIT_INFO } from '@/lib/constants';
 import { useAuth } from '@/providers/auth-provider';
+import { SubstitutionDialog } from '@/components/workout/substitution-dialog';
 import Link from 'next/link';
 
 export default function ProgramDetailPage() {
@@ -31,6 +32,7 @@ export default function ProgramDetailPage() {
   const [deleting, setDeleting] = useState(false);
   const [editingExercise, setEditingExercise] = useState<string | null>(null);
   const [editValues, setEditValues] = useState<{ sets: number; repsMin: number; repsMax: number }>({ sets: 3, repsMin: 8, repsMax: 12 });
+  const [swapTarget, setSwapTarget] = useState<{ rowId: string; exerciseId: string; exerciseName: string } | null>(null);
 
   const handleActivate = async () => {
     if (!user || !programId) return;
@@ -55,6 +57,27 @@ export default function ProgramDetailPage() {
     await supabase.from('programs').update({ status: 'paused' }).eq('id', programId);
     setProgram((prev: any) => prev ? { ...prev, status: 'paused' } : prev);
     setActivating(false);
+  };
+
+  const handleSwapExercise = async (rowId: string, newExerciseId: string, newExerciseName: string) => {
+    const supabase = createClient();
+    await supabase.from('program_exercises')
+      .update({ exercise_id: newExerciseId })
+      .eq('id', rowId);
+
+    // Update local state
+    setWeeks((prev) => prev.map((w) => ({
+      ...w,
+      days: w.days.map((d: any) => ({
+        ...d,
+        exercises: d.exercises.map((ex: any) =>
+          ex.id === rowId
+            ? { ...ex, exercise_id: newExerciseId, exercise: { ...ex.exercise, name: newExerciseName } }
+            : ex
+        ),
+      })),
+    })));
+    setSwapTarget(null);
   };
 
   const handleSaveExercise = async (exerciseRowId: string) => {
@@ -327,6 +350,10 @@ export default function ProgramDetailPage() {
                           <Badge variant="secondary" className="text-xs">Compound</Badge>
                         )}
                         <Button variant="ghost" size="sm" className="h-7 px-2 text-xs"
+                          onClick={() => setSwapTarget({ rowId: ex.id, exerciseId: ex.exercise_id, exerciseName: ex.exercise?.name || 'Unknown' })}>
+                          <ArrowLeftRight className="h-3 w-3 mr-1" /> Swap
+                        </Button>
+                        <Button variant="ghost" size="sm" className="h-7 px-2 text-xs"
                           onClick={() => {
                             setEditingExercise(ex.id);
                             setEditValues({ sets: ex.target_sets, repsMin: ex.target_reps_min, repsMax: ex.target_reps_max });
@@ -399,6 +426,17 @@ export default function ProgramDetailPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Swap exercise dialog */}
+      <SubstitutionDialog
+        open={!!swapTarget}
+        onOpenChange={(open) => { if (!open) setSwapTarget(null); }}
+        exerciseId={swapTarget?.exerciseId || ''}
+        exerciseName={swapTarget?.exerciseName || ''}
+        onSelect={(newId, newName) => {
+          if (swapTarget) handleSwapExercise(swapTarget.rowId, newId, newName);
+        }}
+      />
     </div>
   );
 }
