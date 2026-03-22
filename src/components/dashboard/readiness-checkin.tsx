@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/providers/auth-provider';
 import { calculateReadinessScore, getReadinessBand } from '@/engines/readiness-engine';
@@ -31,6 +31,27 @@ export function ReadinessCheckin({ onComplete, existingScore }: ReadinessCheckin
   });
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(!!existingScore);
+  const [savedScore, setSavedScore] = useState<number | null>(existingScore ?? null);
+
+  // Check if already logged today
+  useEffect(() => {
+    if (!user || saved) return;
+    const checkToday = async () => {
+      const today = new Date().toISOString().split('T')[0];
+      const supabase = createClient();
+      const { data } = await supabase
+        .from('readiness_logs')
+        .select('readiness_score')
+        .eq('user_id', user.id)
+        .eq('logged_at', today)
+        .maybeSingle();
+      if (data) {
+        setSaved(true);
+        setSavedScore(data.readiness_score);
+      }
+    };
+    checkToday();
+  }, [user, saved]);
 
   const score = calculateReadinessScore({
     sleepQuality: values.sleep,
@@ -71,11 +92,12 @@ export function ReadinessCheckin({ onComplete, existingScore }: ReadinessCheckin
 
     setSaving(false);
     setSaved(true);
+    setSavedScore(score);
     onComplete?.(score);
   };
 
   if (saved) {
-    const displayScore = existingScore ?? score;
+    const displayScore = savedScore ?? existingScore ?? score;
     const displayBand = getReadinessBand(displayScore);
     const displayColor =
       displayBand === 'push' ? 'text-green-400' :
