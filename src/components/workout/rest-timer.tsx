@@ -6,9 +6,36 @@ import { Button } from '@/components/ui/button';
 import { formatDuration } from '@/lib/utils';
 import { X, Plus } from 'lucide-react';
 
+function playBeep() {
+  try {
+    const ctx = new AudioContext();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.frequency.value = 880;
+    gain.gain.value = 0.3;
+    osc.start();
+    osc.stop(ctx.currentTime + 0.15);
+    // Second beep after short pause
+    setTimeout(() => {
+      const osc2 = ctx.createOscillator();
+      const gain2 = ctx.createGain();
+      osc2.connect(gain2);
+      gain2.connect(ctx.destination);
+      osc2.frequency.value = 1100;
+      gain2.gain.value = 0.3;
+      osc2.start();
+      osc2.stop(ctx.currentTime + 0.2);
+    }, 200);
+    navigator.vibrate?.([200, 100, 200]);
+  } catch {}
+}
+
 export function RestTimer() {
   const { restTimer, tickRestTimer, stopRestTimer, startRestTimer } = useWorkoutStore();
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const prevRemaining = useRef(restTimer.remaining);
 
   useEffect(() => {
     if (restTimer.active && restTimer.remaining > 0) {
@@ -17,6 +44,11 @@ export function RestTimer() {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
+    // Play beep when timer reaches 0 (was previously > 0)
+    if (restTimer.remaining === 0 && prevRemaining.current > 0 && !restTimer.active) {
+      playBeep();
+    }
+    prevRemaining.current = restTimer.remaining;
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
