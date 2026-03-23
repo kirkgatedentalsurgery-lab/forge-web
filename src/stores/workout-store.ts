@@ -36,7 +36,7 @@ interface WorkoutState {
   startedAt: Date | null;
   isActive: boolean;
   sessionNotes: string;
-  restTimer: { active: boolean; remaining: number; total: number };
+  restTimer: { active: boolean; remaining: number; total: number; endTime: number };
 
   setSessionNotes: (notes: string) => void;
 
@@ -78,7 +78,7 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
   startedAt: null,
   isActive: false,
   sessionNotes: '',
-  restTimer: { active: false, remaining: 0, total: 0 },
+  restTimer: { active: false, remaining: 0, total: 0, endTime: 0 },
 
   setSessionNotes: (notes) => set({ sessionNotes: notes }),
 
@@ -97,13 +97,18 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
 
     if (error) throw error;
 
+    const now = new Date();
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('workout_startedAt', now.toISOString());
+      localStorage.setItem('workout_sessionId', data.id);
+    }
     set({
       sessionId: data.id,
       programId: programId || null,
       programDayId: programDayId || null,
       exercises,
       currentExerciseIndex: 0,
-      startedAt: new Date(),
+      startedAt: now,
       isActive: true,
     });
   },
@@ -273,12 +278,13 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
   },
 
   startRestTimer: (seconds) => {
-    set({ restTimer: { active: true, remaining: seconds, total: seconds } });
+    const endTime = Date.now() + seconds * 1000;
+    set({ restTimer: { active: true, remaining: seconds, total: seconds, endTime } });
   },
 
   tickRestTimer: () => {
     set((state) => {
-      const remaining = state.restTimer.remaining - 1;
+      const remaining = Math.max(0, Math.ceil((state.restTimer.endTime - Date.now()) / 1000));
       if (remaining <= 0) {
         return { restTimer: { ...state.restTimer, active: false, remaining: 0 } };
       }
@@ -287,7 +293,7 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
   },
 
   stopRestTimer: () => {
-    set({ restTimer: { active: false, remaining: 0, total: 0 } });
+    set({ restTimer: { active: false, remaining: 0, total: 0, endTime: 0 } });
   },
 
   finishWorkout: async ({ userId, overallFatigue }) => {
@@ -400,10 +406,14 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
     }
 
     // Reset
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('workout_startedAt');
+      localStorage.removeItem('workout_sessionId');
+    }
     set({
       sessionId: null, programId: null, programDayId: null,
       exercises: [], currentExerciseIndex: 0, startedAt: null, isActive: false,
-      sessionNotes: '', restTimer: { active: false, remaining: 0, total: 0 },
+      sessionNotes: '', restTimer: { active: false, remaining: 0, total: 0, endTime: 0 },
     });
   },
 
@@ -413,10 +423,14 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
       const supabase = createClient();
       supabase.from('workout_sessions').delete().eq('id', state.sessionId);
     }
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('workout_startedAt');
+      localStorage.removeItem('workout_sessionId');
+    }
     set({
       sessionId: null, programId: null, programDayId: null,
       exercises: [], currentExerciseIndex: 0, startedAt: null, isActive: false,
-      sessionNotes: '', restTimer: { active: false, remaining: 0, total: 0 },
+      sessionNotes: '', restTimer: { active: false, remaining: 0, total: 0, endTime: 0 },
     });
   },
 }));

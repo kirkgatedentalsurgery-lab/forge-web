@@ -60,6 +60,41 @@ export default function WorkoutPage() {
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [store.isActive, store.startedAt]);
 
+  // Recover timer when tab regains focus (after screen lock / tab switch)
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible' && store.isActive && store.startedAt) {
+        const diff = Math.floor((Date.now() - store.startedAt.getTime()) / 1000);
+        setElapsed(formatDuration(diff));
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, [store.isActive, store.startedAt]);
+
+  // Keep screen awake during workout
+  useEffect(() => {
+    if (!store.isActive) return;
+    let wakeLock: any = null;
+    const requestWakeLock = async () => {
+      try {
+        if ('wakeLock' in navigator) {
+          wakeLock = await (navigator as any).wakeLock.request('screen');
+        }
+      } catch {}
+    };
+    requestWakeLock();
+    // Re-acquire wake lock when tab regains focus (it gets released on blur)
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') requestWakeLock();
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => {
+      wakeLock?.release();
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, [store.isActive]);
+
   // Fetch today's workout
   const fetchToday = useCallback(async () => {
     if (!user || store.isActive) { setLoading(false); return; }

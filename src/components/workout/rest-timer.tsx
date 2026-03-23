@@ -22,6 +22,17 @@ export function RestTimer() {
     };
   }, [restTimer.active, restTimer.remaining, tickRestTimer]);
 
+  // Recover rest timer when tab regains focus
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible' && restTimer.active) {
+        tickRestTimer();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, [restTimer.active, tickRestTimer]);
+
   if (!restTimer.active) return null;
 
   const progress = restTimer.total > 0 ? restTimer.remaining / restTimer.total : 0;
