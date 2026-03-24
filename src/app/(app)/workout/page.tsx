@@ -277,9 +277,36 @@ export default function WorkoutPage() {
     setFinishing(true);
 
     try {
-      // Capture session ID before finishWorkout clears it
+      // Capture IDs before finishWorkout clears store state
       const sessionId = store.sessionId;
+      const programId = todayWorkout?.programId;
 
+      // Advance program FIRST (before finishWorkout clears state)
+      if (programId) {
+        const supabase = createClient();
+        const { data: prog } = await supabase
+          .from('programs')
+          .select('days_per_week, num_weeks, current_week, current_day')
+          .eq('id', programId).single();
+
+        if (prog) {
+          let nextDay = prog.current_day + 1;
+          let nextWeek = prog.current_week;
+          if (nextDay > prog.days_per_week) { nextDay = 1; nextWeek++; }
+
+          if (nextWeek > prog.num_weeks) {
+            await supabase.from('programs')
+              .update({ status: 'completed', completed_at: new Date().toISOString() })
+              .eq('id', programId);
+          } else {
+            await supabase.from('programs')
+              .update({ current_day: nextDay, current_week: nextWeek })
+              .eq('id', programId);
+          }
+        }
+      }
+
+      // Save workout data + progressive overload
       await store.finishWorkout({
         userId: user.id,
         overallFatigue: feedback?.difficulty,
@@ -294,31 +321,6 @@ export default function WorkoutPage() {
           overall_pump: feedback.pump,
           mood_after: feedback.mood,
         });
-      }
-
-      // Advance program
-      if (todayWorkout) {
-        const supabase = createClient();
-        const { data: prog } = await supabase
-          .from('programs')
-          .select('days_per_week, num_weeks, current_week, current_day')
-          .eq('id', todayWorkout.programId).single();
-
-        if (prog) {
-          let nextDay = prog.current_day + 1;
-          let nextWeek = prog.current_week;
-          if (nextDay > prog.days_per_week) { nextDay = 1; nextWeek++; }
-
-          if (nextWeek > prog.num_weeks) {
-            await supabase.from('programs')
-              .update({ status: 'completed', completed_at: new Date().toISOString() })
-              .eq('id', todayWorkout.programId);
-          } else {
-            await supabase.from('programs')
-              .update({ current_day: nextDay, current_week: nextWeek })
-              .eq('id', todayWorkout.programId);
-          }
-        }
       }
     } catch (err: any) {
       alert('Failed to save workout: ' + (err.message || 'Unknown error'));
