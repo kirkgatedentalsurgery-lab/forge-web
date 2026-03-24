@@ -26,6 +26,8 @@ interface UseExercisesOptions {
 export function useExercises(options: UseExercisesOptions = {}) {
   return useQuery({
     queryKey: ['exercises', options],
+    staleTime: 5 * 60 * 1000, // 5 min cache — exercises rarely change
+    gcTime: 30 * 60 * 1000, // keep in memory 30 min
     queryFn: async (): Promise<ExerciseListItem[]> => {
       const supabase = createClient();
 

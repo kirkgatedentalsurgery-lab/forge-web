@@ -1,427 +1,307 @@
 # CLAUDE.md
 
 ## Project
-Forge — Intelligent Lifting Coach
+ADAPTIS — Train. Adapt. Become.
 
 ## Mission
-Build a premium, mobile-first lifting app that combines the best parts of RP Strength, Fitbod, Hevy, Jefit, and StrengthLog.
+Build a premium, mobile-first intelligent lifting coach that combines the best of RP Strength, Fitbod, Hevy, Jefit, and StrengthLog. ADAPTIS should feel like an elite coach with a beautiful logger: smart enough for advanced lifters, simple enough for busy professionals, fast enough to use between sets.
 
-Forge should feel like an elite coach with a beautiful logger:
-- smart enough for advanced lifters
-- simple enough for busy professionals
-- fast enough to use between sets
-
-## Non-negotiables
-1. This is not a generic wellness app.
+## Non-Negotiables
+1. This is a serious lifting app, not a generic wellness app.
 2. Training logic must be opinionated and evidence-aligned.
-3. Logging must be frictionless.
-4. The app must support both hypertrophy and strength.
+3. Logging must be frictionless — a set in under 2 seconds.
+4. Support both hypertrophy and strength.
 5. Workout generation must consider equipment, time, recovery, and goal.
-6. The UI should feel premium, minimal, and fast.
+6. The UI must feel premium, minimal, and fast.
 7. Every architectural choice should favor maintainability.
 
-## Core product principles
+## Core Product Principles
 - Coach, not spreadsheet
 - Adaptive, not random
 - Fast, not cluttered
 - Deep, not confusing
 - Serious, not gimmicky
 
-## Product pillars
-### 1. Smart programming
-Forge must generate structured training blocks and day-by-day sessions.
+---
 
-### 2. Autoregulation
-Forge must adapt training using:
-- RIR/RPE
-- performance trends
-- soreness
-- readiness
-- pain flags
-- adherence
+## Tech Stack
+- **Framework:** Next.js 15 (App Router)
+- **Language:** TypeScript (strict mode)
+- **Database:** PostgreSQL via Supabase
+- **Auth:** Supabase Auth
+- **Styling:** Tailwind CSS v4 + shadcn/ui
+- **State:** Zustand (client state), TanStack Query (server state)
+- **Charts:** Recharts
+- **Validation:** Zod
+- **Testing:** Vitest
+- **Deployment:** Vercel
+- **PWA:** next-pwa for mobile install
 
-### 3. Elite logging UX
-Users must be able to log a set in under 2 seconds.
+## File Structure
+```
+src/
+  app/              # Next.js App Router pages and layouts
+    (app)/          # Authenticated app routes (dashboard, workout, programs, etc.)
+    (auth)/         # Login and register pages
+    (onboarding)/   # Onboarding wizard
+  components/       # Shared UI components
+    layout/         # Shell, nav, sidebar
+    programs/       # Program-specific components
+    ui/             # shadcn/ui primitives (button, card, input, etc.)
+    workout/        # Workout logging components
+  engines/          # Training logic (pure functions, no DB calls)
+    __tests__/      # Vitest test files for all engines
+  hooks/            # React hooks (useAuth, useUserProfile, etc.)
+  lib/              # Utilities (supabase client, constants, utils)
+  providers/        # React context providers (auth, theme, query)
+  stores/           # Zustand stores
+  types/            # TypeScript type definitions
+supabase/
+  migrations/       # SQL migration files (numbered 001–016+)
+```
 
-### 4. Useful analytics
-Analytics must help users make better decisions, not just admire charts.
+## Supabase
+- **Project URL:** https://mvhkjrfqiqnsqmvfzfzi.supabase.co
+- All migrations run via SQL Editor (no CLI migration tool)
+- Copy SQL to clipboard with `pbcopy`, user pastes in Supabase SQL Editor
+- RLS is enabled — queries from the client run as the authenticated user
+- Exercise data is seeded via migrations (not runtime inserts)
+- When writing migrations, always use `IF NOT EXISTS` / `ON CONFLICT` where possible
 
-## Inspiration map
-### RP Strength
-Take:
-- mesocycles
-- volume landmarks mindset
-- RIR-driven progression
-- fatigue and soreness feedback
-- deload logic
-- muscle prioritisation
+## Running the App
+```bash
+cd ~/forge-web && npm run dev    # http://localhost:3000
+npx vitest run                    # Run all tests
+```
 
-Avoid:
-- excessive jargon in the UI
-- making casual users feel lost
+## Live Deployment
+- **URL:** https://forge-web-alpha.vercel.app
+- Auto-deploys on push to `main` branch
+- Environment variables set in Vercel dashboard
 
-### Fitbod
-Take:
-- equipment-aware generation
-- recovery-aware planning
-- travel and home gym flexibility
-- “open app and train” simplicity
+---
 
-Avoid:
-- random feeling workouts
-- weak long-term structure
+## Brand Identity
 
-### Hevy / Strong
-Take:
-- clean logging
-- fast inputs
-- timer and PR visibility
-- beautiful history
+### Name and Tagline
+- **Name:** ADAPTIS (always uppercase in display)
+- **Tagline:** Train. Adapt. Become.
 
-### Jefit
-Take:
-- analytics depth
-- training volume views
-- progression history
+### Logo
+- Located at: `/Users/jonathanlane/Downloads/ChatGPT Image Mar 22, 2026, 10_51_07 AM.png`
+- Features a stylized "A" with a blue gradient swoosh
+- Dark background (#0a0f1a to #141b2d)
 
-### StrengthLog / barbell apps
-Take:
-- e1RM tracking
-- percentage-based progression
-- lift specificity
+### Color System
+The ADAPTIS palette is built from the logo's blue gradient. All colors use oklch for perceptual uniformity.
 
-## Main user types
-### 1. Busy serious lifter
-- trains 3–5 days/week
-- wants excellent programming
-- has limited time
-- wants to open app and go
+**Primary blue gradient (from the logo "A"):**
+- Light blue: `#7EC8E3` / `oklch(0.80 0.08 220)`
+- Mid blue: `#4A9FD9` / `oklch(0.65 0.12 240)`
+- Deep blue: `#2E6FBB` / `oklch(0.50 0.14 250)` — this is `--primary`
+- Navy: `#1a3a5c` / `oklch(0.30 0.06 250)`
 
-### 2. Intermediate hypertrophy lifter
-- wants more muscle
-- wants better progression
-- likes data but not excessive complexity
+**Dark mode (default):**
+- Background: `oklch(0.12 0.01 250)` — near-black with blue undertone
+- Card: `oklch(0.16 0.01 250)` — slightly elevated
+- Border: `oklch(0.25 0.01 250)` — subtle separation
+- Foreground: `oklch(0.95 0.01 250)` — off-white
 
-### 3. Strength / powerbuilding lifter
-- cares about squat, bench, deadlift, overhead press
-- wants structure and analytics
+**Light mode:**
+- Background: `oklch(0.98 0.005 250)`
+- Card: white
+- Primary: `oklch(0.50 0.14 250)`
 
-### 4. Travel / flexible equipment user
-- needs the plan to adapt to whatever gym is available
+**Semantic colors:**
+- Success/PR: green (`oklch(0.65 0.15 145)`)
+- Warning/fatigue: amber (`oklch(0.70 0.15 75)`)
+- Destructive/pain: red (`oklch(0.55 0.2 25)`)
 
-## MVP scope
-Build these first:
-1. onboarding
-2. exercise database
-3. user profile and equipment profile
-4. workout generator
-5. training blocks and mesocycles
-6. workout logging UI
-7. recovery check-ins
-8. progression engine
-9. basic analytics dashboard
-10. substitutions engine
+### Typography
+- Headings: Inter or system-ui, tight tracking (`tracking-tight`), bold/semibold
+- Body: system-ui, generous line-height (1.6–1.7)
+- Data/numbers: tabular-nums for aligned columns in workout logging
+- All caps for: brand name "ADAPTIS", tab labels, section headers where appropriate
 
-## User onboarding requirements
-Collect:
-- goal
-- experience level
-- training age
-- days per week
-- session duration
-- equipment available
-- preferred split or no preference
-- favorite exercises
-- disliked exercises
-- injury / limitation flags
-- priority muscles
-- current body weight optional
-- current estimated lifts optional
+### Design Guardrails
+- **Never** use default Tailwind palette colors (indigo-500, blue-600). Always use the ADAPTIS CSS variables.
+- **Shadows:** Layered, color-tinted with low opacity. Not flat `shadow-md`.
+- **Gradients:** Use the brand blue gradient for hero elements and CTAs. Layer with subtle noise for depth.
+- **Animations:** Only animate `transform` and `opacity`. Use `transition-transform duration-150` not `transition-all`. Spring-style easing preferred.
+- **Interactive states:** Every clickable element must have hover, focus-visible, and active states. No exceptions.
+- **Touch targets:** Minimum 44x44px on all tappable elements (Apple HIG).
+- **Spacing:** Use consistent spacing tokens. Don't mix random Tailwind steps.
+- **Depth system:** Three layers — base (background), elevated (card), floating (modal/sheet). Each layer is visually distinct.
+- **Empty states:** Every list/page must have a meaningful empty state, not just blank space.
 
-At end of onboarding, create:
-- user profile
-- equipment profile
-- first training block
-- week 1 workouts
+---
 
-## Goals to support
-- hypertrophy
-- strength
-- powerbuilding
-- general fitness
-- fat loss with muscle retention
+## Training Engine
 
-## Training modes
-### Coach Mode
-App decides split, exercises, and progression.
+### Training Modes
+- **Coach Mode:** App decides split, exercises, and progression automatically.
+- **Builder Mode:** User picks split, chooses exercises from filtered list, app handles progression.
+- Guided and Manual modes removed for simplicity.
 
-### Guided Mode
-App creates plan, user can swap from approved substitutes.
-
-### Builder Mode
-User picks split and structure, app handles progression.
-
-### Manual Mode
-User logs training manually and still receives analytics.
-
-## Training engine rules
-### Split logic
+### Split Logic
 - 2 days: full body or upper/lower
 - 3 days: full body or PPL-lite
 - 4 days: upper/lower or torso-limbs
 - 5 days: PPL + upper/lower or specialization
 - 6 days: PPL repeated or advanced specialization
+- Custom: user defines each day's muscle group focus
 
-### Exercise ordering
-General order:
-1. primary compound
-2. secondary compound
-3. accessories
-4. isolation
-5. optional pump / finisher work
+### Session Duration Presets
+These define how many exercises per session:
+- **30 min:** 3–4 exercises
+- **45 min:** 4–5 exercises
+- **60 min:** 5–7 exercises
+- **75 min:** 6–8 exercises
+- **90+ min:** 7–10 exercises
 
-### Exercise metadata required
-Each exercise must define:
-- primary muscles
-- secondary muscles
-- movement pattern
-- equipment
-- fatigue score
-- joint stress score
-- spine load score
-- skill score
-- hypertrophy score
-- strength score
-- unilateral or bilateral
-- stable or unstable
-- substitute candidates
+The program generator MUST respect these counts. If the UI promises "5–7 exercises", the generated workout must have 5–7 exercises.
 
-### Session generation constraints
-Workout generator must consider:
-- available equipment
-- session length
-- recent fatigue
-- muscle readiness
-- user goal
-- current mesocycle week
-- exercise variety rules
-- favorite / disliked exercises
+### Exercise Ordering
+1. Primary compound
+2. Secondary compound
+3. Accessories
+4. Isolation
+5. Optional pump / finisher
 
-## Hypertrophy logic
-Implement:
-- weekly set targets by muscle group
-- priority muscle multiplier
-- RIR targets per week
-- gradual volume progression across block
-- deload week after fatigue build-up
+### Hypertrophy Logic
+- Weekly set targets by muscle group (beginner: 6–10, intermediate: 8–14, advanced: 10–20)
+- Priority muscles: +20% to +40% volume
+- RIR targets per week (starts ~3–4 RIR, progresses to 0–1 by end of block)
+- Gradual volume progression across block
+- Deload week after fatigue build-up
 
-Suggested starting weekly hard sets:
-- beginner: 6–10 per muscle
-- intermediate: 8–14
-- advanced: 10–20
-
-Priority muscles:
-- +20% to +40% volume
-
-Low-priority muscles:
-- maintenance volume
-
-### Hypertrophy progression
-- if performance good and fatigue low → increase load or sets
-- if performance good and fatigue moderate → hold volume, increase load selectively
-- if performance poor and fatigue high → reduce sets or deload
-- if pain flagged → substitute movement pattern
-
-## Strength logic
-Implement:
-- main lift specificity
-- accessory support work
+### Strength Logic
+- Main lift specificity (squat, bench, deadlift, OHP)
+- Percentage-based loading with training max (90% of 1RM)
+- 4 phases: accumulation, intensification, deload, peaking
 - e1RM tracking
-- RIR and/or percentage-based loading
-- accumulation → intensification → deload structure
 
-Main lifts to support first:
-- squat
-- bench press
-- deadlift
-- overhead press
-- weighted pull-up optional
+### Progressive Overload
+- After each session, suggest weight/rep increases based on performance
+- Auto-load previous session's weight and reps into next set
+- If all sets completed at target reps: increase weight
+- If performance declining: maintain or reduce
 
-## Readiness engine
-Track readiness from:
-- sleep quality
-- sleep duration
-- energy
-- stress
-- soreness
-- motivation
-- recent performance
-
-Use readiness bands:
-- 85–100: push day
+### Readiness Engine
+Readiness score (0–100) from: sleep quality, sleep duration, energy, stress, soreness, motivation.
+- 85–100: push day (increase volume/intensity slightly)
 - 70–84: normal plan
-- 55–69: conservative plan
-- below 55: recovery-biased version
+- 55–69: conservative (reduce volume slightly)
+- Below 55: recovery-biased (reduce significantly)
 
-Readiness should adjust:
-- target load slightly
-- total sets slightly
-- exercise choice when appropriate
+### Deload Triggers
+Trigger when 3+ present: 2 poor sessions in a row, persistent high soreness, low readiness repeatedly, declining performance, increasing pain flags, reduced motivation.
 
-## Recovery tracking
-Track at 3 levels:
-### Global
-- sleep
-- stress
-- energy
-- motivation
-- global soreness
+---
 
-### Local muscle
-- chest
-- back
-- quads
-- hamstrings
-- glutes
-- delts
-- biceps
-- triceps
-- calves
-- abs
+## Workout Logging UX
+The workout screen is where users spend 90% of their time. It must be:
+- **All exercises visible** — show every exercise in the session, not one at a time
+- **Any-order logging** — user can log sets on any exercise in any order
+- **Reorderable** — exercises can be moved up/down mid-workout
+- **Auto-fill** — previous set's weight/reps pre-populate the next set
+- **One-tap matching** — tap to match last session's weight/reps instantly
+- **PR detection** — celebrate new personal records with animation
+- **Rest timer** — continuous timer with audible beep + vibration at zero
+- **Pain flags** — toggle per-set with location and severity
+- **Exercise swap** — swap any exercise mid-workout from substitution engine
+- **Warm-up generator** — auto-generate warm-up sets based on working weight
 
-### Pattern-specific
-- squat pattern
-- hinge pattern
-- horizontal press
-- vertical press
-- horizontal pull
-- vertical pull
+### Program Advancement
+When a workout is completed (all sets logged + feedback submitted), the program MUST advance to the next day automatically. The user should never be stuck on a completed workout.
 
-## Deload triggers
-Trigger deload when 3 or more are present:
-- 2 poor sessions in a row
-- soreness persistently high
-- readiness score low repeatedly
-- reps/load trending down at same RIR
-- pain flags increasing
-- motivation reduced
+---
 
-Deload behavior:
-- reduce volume 40%–60%
-- slightly reduce intensity
-- keep movement patterns familiar
+## Analytics
+Dashboard must include:
+- Weekly training volume by muscle group (bar chart)
+- e1RM trends (line chart per exercise)
+- Readiness trend (area chart)
+- Personal records board
+- Muscle balance radar chart
+- Coach notes (plain-English summaries)
+- Body weight trend
+- Adherence rate
 
-## Logging UX requirements
-Today’s workout page must show:
-- exercise name
-- previous best
-- target sets/reps/RIR/load
-- quick set logging controls
-- timer
-- notes
-- pain toggle
-- swap exercise
-- add exercise
-- skip exercise
+---
 
-Set logging must be possible with minimal taps.
-
-## Analytics requirements
-Dashboard should include:
-- weekly training volume by muscle group
-- e1RM trends
-- personal records
-- readiness trend
-- adherence rate
-- fatigue warnings
-- body weight trend
-- muscle balance overview
-
-Also include plain-English summaries like:
-- “Chest volume is progressing well.”
-- “Quad fatigue is accumulating.”
-- “A deload is likely needed within the next 5–7 days.”
-
-## Design system
-Style goals:
-- dark mode first
-- premium and sharp
-- minimal clutter
-- bold typography
-- excellent spacing
-- large touch targets
-- mobile-first
-
-Primary screens:
-- dashboard
-- today’s workout
-- exercise details
-- history
-- analytics
-- profile/settings
-
-## Tech stack
-Use:
-- Next.js 14+
-- TypeScript
-- PostgreSQL
-- Prisma
-- Supabase Auth
-- Tailwind CSS
-- shadcn/ui
-- Zustand
-- TanStack Query
-- Recharts for analytics
-- Zod for validation
-
-## File structure expectations
-Use clean domain separation:
-- app routes in `src/app`
-- shared UI in `src/components`
-- training engine in `src/lib/training`
-- analytics logic in `src/lib/analytics`
-- DB code in `src/lib/db`
-- types in `src/types`
-- seed data in `src/data`
-
-## Coding rules
-- Use strict TypeScript.
-- Use server actions or route handlers cleanly.
-- Validate all API inputs with Zod.
-- Keep business logic out of UI components.
-- Build composable utilities.
+## Coding Rules
+- Use strict TypeScript. No `any` unless absolutely necessary.
+- Validate all user inputs with Zod schemas.
+- Keep business logic in `engines/` as pure functions. No DB calls in engine files.
+- Keep UI components focused on rendering. Business logic lives in hooks or engines.
 - Prefer explicit naming over clever abstractions.
+- Avoid giant files — split at ~200 lines.
 - Add comments only where they truly help.
-- Avoid giant files.
+- Don't over-engineer. Only build what's needed now.
 
-## Testing priorities
-Must test:
-- readiness scoring
-- workout generation
-- progression rules
-- deload triggers
-- substitution logic
-- analytics aggregation
+## Testing
+All engines must have tests. Currently 91 tests across:
+- `readiness-engine.test.ts` (15 tests)
+- `progressive-overload.test.ts` (15 tests)
+- `deload-detector.test.ts` (14 tests)
+- `strength-mode.test.ts` (14 tests)
+- `split-templates.test.ts` (12 tests)
 
-## Future roadmap after MVP
-- nutrition integration
+Run with `npx vitest run`. All must pass before pushing.
+
+## Error Handling
+- Wrap all Supabase calls in try-catch
+- Show user-facing error messages (not raw errors)
+- Log errors to console with context
+- Never fail silently — if something breaks, the user must know
+
+## Performance
+- Batch Supabase queries where possible (program detail: 3 queries not 25)
+- Use `select()` to only fetch needed columns
+- Lazy load heavy components (Recharts, exercise picker)
+- Minimize re-renders with proper React memo/callback patterns
+
+## Accessibility
+- Minimum 44x44px touch targets
+- Proper focus management on modals and sheets
+- Semantic HTML (buttons for actions, links for navigation)
+- Color contrast ratio 4.5:1 minimum for text
+- Keyboard navigation support on web
+
+## Mobile / PWA
+- Mobile-first responsive design
+- Safe area insets for notched devices (`pb-safe`)
+- Numeric keyboard (`inputMode="decimal"`) for weight/rep inputs
+- Press animation on interactive elements (`active:scale-95`)
+- Hide scrollbars on horizontal scroll areas
+- PWA manifest for "Add to Home Screen"
+
+---
+
+## Current State (as of March 2026)
+- 766 exercises in database with muscle group mappings
+- 91 passing tests
+- Auth, onboarding, dashboard, programs, workout logging, analytics, settings all built
+- Coach Mode and Builder Mode active
+- Custom split designer built
+- Readiness check-in, deload detection, progressive overload all wired up
+- Deployed at forge-web-alpha.vercel.app
+
+## Known Issues Being Fixed
+- Exercise muscle mappings from wger import need correction (migration 016 in progress)
+- Program advancement after workout completion needs verification
+- Rest timer pauses when screen locks (browser limitation)
+
+## Future Roadmap
+- Nutrition integration
 - Apple Health / wearable integration
-- coach portal
+- Coach portal
 - AI coach chat
-- video form review
-- social / community optional
+- Video form review
+- Social / community features
+- Stripe payments for monetization
+- Native iOS/Android app (React Native or Swift)
 
-## Deliverables expected
-1. production-quality scaffold
-2. Prisma schema
-3. seed script with exercise examples
-4. training engine utilities
-5. readiness scoring utility
-6. dashboard starter UI
-7. workout logger starter UI
-8. analytics starter UI
-9. README
-10. setup instructions
-
-## Final note
-Whenever there is a product tradeoff, choose the path that makes Forge feel like a serious lifting product for people who actually train.
+## Final Note
+When there is a product tradeoff, always choose the path that makes ADAPTIS feel like a serious lifting product for people who actually train. Never make it feel generic, gimmicky, or like a template.

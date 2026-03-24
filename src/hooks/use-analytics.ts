@@ -8,6 +8,7 @@ export function useVolumeData(userId: string | undefined, weeks: number = 8) {
   return useQuery({
     queryKey: ['analytics', 'volume', userId, weeks],
     enabled: !!userId,
+    staleTime: 2 * 60 * 1000,
     queryFn: async () => {
       const supabase = createClient();
       const since = new Date();
@@ -84,6 +85,7 @@ export function useE1rmTrends(userId: string | undefined, exerciseId?: string) {
   return useQuery({
     queryKey: ['analytics', 'e1rm', userId, exerciseId],
     enabled: !!userId,
+    staleTime: 2 * 60 * 1000,
     queryFn: async () => {
       const supabase = createClient();
       let query = supabase
@@ -114,6 +116,7 @@ export function usePersonalRecords(userId: string | undefined) {
   return useQuery({
     queryKey: ['analytics', 'prs', userId],
     enabled: !!userId,
+    staleTime: 2 * 60 * 1000,
     queryFn: async () => {
       const supabase = createClient();
       const { data } = await supabase
@@ -140,6 +143,7 @@ export function useWorkoutStats(userId: string | undefined) {
   return useQuery({
     queryKey: ['analytics', 'stats', userId],
     enabled: !!userId,
+    staleTime: 2 * 60 * 1000,
     queryFn: async () => {
       const supabase = createClient();
 
@@ -187,6 +191,7 @@ export function useReadinessTrend(userId: string | undefined, days: number = 30)
   return useQuery({
     queryKey: ['analytics', 'readiness', userId, days],
     enabled: !!userId,
+    staleTime: 2 * 60 * 1000,
     queryFn: async () => {
       const supabase = createClient();
       const since = new Date();
@@ -212,6 +217,7 @@ export function useMuscleBalance(userId: string | undefined) {
   return useQuery({
     queryKey: ['analytics', 'muscle-balance', userId],
     enabled: !!userId,
+    staleTime: 2 * 60 * 1000,
     queryFn: async () => {
       const supabase = createClient();
 

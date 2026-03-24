@@ -6,12 +6,15 @@ import {
   useVolumeData, useE1rmTrends, usePersonalRecords,
   useWorkoutStats, useReadinessTrend, useMuscleBalance,
 } from '@/hooks/use-analytics';
-import { VolumeChart } from '@/components/analytics/volume-chart';
-import { E1rmChart } from '@/components/analytics/e1rm-chart';
-import { ReadinessChart } from '@/components/analytics/readiness-chart';
-import { PrBoard } from '@/components/analytics/pr-board';
-import { MuscleBalanceRadar } from '@/components/analytics/muscle-balance-radar';
+import dynamic from 'next/dynamic';
 import { StatsCards } from '@/components/analytics/stats-cards';
+
+// Lazy-load chart components (Recharts is 415KB)
+const VolumeChart = dynamic(() => import('@/components/analytics/volume-chart').then(m => ({ default: m.VolumeChart })), { ssr: false });
+const E1rmChart = dynamic(() => import('@/components/analytics/e1rm-chart').then(m => ({ default: m.E1rmChart })), { ssr: false });
+const ReadinessChart = dynamic(() => import('@/components/analytics/readiness-chart').then(m => ({ default: m.ReadinessChart })), { ssr: false });
+const PrBoard = dynamic(() => import('@/components/analytics/pr-board').then(m => ({ default: m.PrBoard })), { ssr: false });
+const MuscleBalanceRadar = dynamic(() => import('@/components/analytics/muscle-balance-radar').then(m => ({ default: m.MuscleBalanceRadar })), { ssr: false });
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';

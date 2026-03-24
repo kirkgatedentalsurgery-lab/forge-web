@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useExercises, useMuscleGroups } from '@/hooks/use-exercises';
 import { Input } from '@/components/ui/input';
@@ -20,17 +20,33 @@ const EQUIPMENT_OPTIONS = [
   { value: 'bands', label: 'Bands' },
 ];
 
+const PAGE_SIZE = 50;
+
 export default function ExercisesPage() {
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [muscleFilter, setMuscleFilter] = useState('');
   const [equipmentFilter, setEquipmentFilter] = useState('');
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+
+  // Debounce search to avoid re-querying on every keystroke
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  // Reset visible count when filters change
+  useEffect(() => { setVisibleCount(PAGE_SIZE); }, [debouncedSearch, muscleFilter, equipmentFilter]);
 
   const { data: exercises, isLoading } = useExercises({
-    search: search.length > 1 ? search : undefined,
+    search: debouncedSearch.length > 1 ? debouncedSearch : undefined,
     muscleGroup: muscleFilter || undefined,
     equipment: equipmentFilter || undefined,
   });
   const { data: muscleGroups } = useMuscleGroups();
+
+  const visibleExercises = useMemo(() => exercises?.slice(0, visibleCount) || [], [exercises, visibleCount]);
+  const hasMore = (exercises?.length || 0) > visibleCount;
 
   return (
     <div className="p-4 lg:p-6 max-w-4xl mx-auto">
@@ -97,8 +113,10 @@ export default function ExercisesPage() {
         </div>
       ) : (
         <div className="space-y-2">
-          <p className="text-xs text-muted-foreground mb-2">{exercises.length} exercises</p>
-          {exercises.map((ex) => (
+          <p className="text-xs text-muted-foreground mb-2">
+            {visibleExercises.length} of {exercises.length} exercises
+          </p>
+          {visibleExercises.map((ex) => (
             <Link key={ex.id} href={`/exercises/${ex.id}`}>
               <Card className="hover:border-primary/50 transition-colors cursor-pointer">
                 <CardContent className="p-3 flex items-center gap-3">
@@ -120,6 +138,13 @@ export default function ExercisesPage() {
               </Card>
             </Link>
           ))}
+          {hasMore && (
+            <button
+              onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
+              className="w-full py-3 text-sm text-primary font-medium hover:bg-primary/5 rounded-lg transition-colors">
+              Show more ({exercises.length - visibleCount} remaining)
+            </button>
+          )}
         </div>
       )}
     </div>
