@@ -55,6 +55,7 @@ interface WorkoutState {
   swapExercise: (exerciseIndex: number, newExerciseId: string, newExerciseName: string) => void;
   undoSet: (exerciseIndex: number, setIndex: number) => void;
   addWarmupSets: (exerciseIndex: number, workingWeight: number) => void;
+  addExercise: (exerciseId: string, exerciseName: string, targetSets?: number) => void;
   reorderExercise: (fromIndex: number, direction: 'up' | 'down') => void;
 
   startRestTimer: (seconds: number) => void;
@@ -182,6 +183,32 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
       exercise.sets = sets;
       exercises[exerciseIndex] = exercise;
       return { exercises };
+    });
+  },
+
+  addExercise: (exerciseId, exerciseName, targetSets = 3) => {
+    set((state) => {
+      const newExercise: ActiveExercise = {
+        exerciseId,
+        exerciseName,
+        orderIndex: state.exercises.length,
+        targetSets,
+        targetRepsMin: 8,
+        targetRepsMax: 12,
+        targetRir: 2,
+        targetWeight: null,
+        restSeconds: 120,
+        sets: Array.from({ length: targetSets }, (_, i) => ({
+          setNumber: i + 1,
+          setType: 'working' as const,
+          weight: null,
+          reps: null,
+          rir: null,
+          isCompleted: false,
+          painFlag: false,
+        })),
+      };
+      return { exercises: [...state.exercises, newExercise] };
     });
   },
 

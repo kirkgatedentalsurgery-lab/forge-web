@@ -9,7 +9,7 @@ import { usePreferredUnit } from '@/hooks/use-user-profile';
 import { SetRow } from '@/components/workout/set-row';
 import { RestTimer } from '@/components/workout/rest-timer';
 import { FeedbackSheet, WorkoutFeedback } from '@/components/workout/feedback-sheet';
-import { SubstitutionDialog } from '@/components/workout/substitution-dialog';
+import { ExerciseBrowserDialog } from '@/components/workout/exercise-browser-dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -18,7 +18,7 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn, formatDuration } from '@/lib/utils';
 import {
-  Dumbbell, ChevronLeft, ChevronRight, Loader2, X, Play,
+  Dumbbell, ChevronLeft, ChevronRight, Loader2, X, Play, Plus,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -41,6 +41,7 @@ export default function WorkoutPage() {
   const [finishing, setFinishing] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
   const [showSwap, setShowSwap] = useState(false);
+  const [showAddExercise, setShowAddExercise] = useState(false);
   const [expandedExercise, setExpandedExercise] = useState<number>(0);
   const [swapExerciseIdx, setSwapExerciseIdx] = useState<number>(0);
 
@@ -470,6 +471,15 @@ export default function WorkoutPage() {
             );
           })}
 
+          {/* Add Exercise */}
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full border-dashed"
+            onClick={() => setShowAddExercise(true)}>
+            <Plus className="h-4 w-4 mr-1" /> Add Exercise
+          </Button>
+
           {/* Session notes */}
           <div className="pt-2">
             <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1 block">
@@ -506,13 +516,25 @@ export default function WorkoutPage() {
           </DialogContent>
         </Dialog>
 
-        <SubstitutionDialog
+        <ExerciseBrowserDialog
           open={showSwap}
           onOpenChange={setShowSwap}
-          exerciseId={store.exercises[swapExerciseIdx]?.exerciseId || ''}
-          exerciseName={store.exercises[swapExerciseIdx]?.exerciseName || ''}
+          mode="swap"
+          currentExerciseName={store.exercises[swapExerciseIdx]?.exerciseName}
+          existingExerciseIds={store.exercises.map((e) => e.exerciseId)}
           onSelect={(newId, newName) => {
             store.swapExercise(swapExerciseIdx, newId, newName);
+          }}
+        />
+
+        <ExerciseBrowserDialog
+          open={showAddExercise}
+          onOpenChange={setShowAddExercise}
+          mode="add"
+          existingExerciseIds={store.exercises.map((e) => e.exerciseId)}
+          onSelect={(newId, newName) => {
+            store.addExercise(newId, newName);
+            setExpandedExercise(store.exercises.length);
           }}
         />
       </div>

@@ -11,11 +11,11 @@ import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
-import { ChevronDown, ChevronRight, ChevronUp, Trash2, Loader2, Play, Pause, Power, ArrowLeftRight } from 'lucide-react';
+import { ChevronDown, ChevronRight, ChevronUp, Trash2, Loader2, Play, Pause, Power, ArrowLeftRight, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SPLIT_INFO } from '@/lib/constants';
 import { useAuth } from '@/providers/auth-provider';
-import { SubstitutionDialog } from '@/components/workout/substitution-dialog';
+import { ExerciseBrowserDialog } from '@/components/workout/exercise-browser-dialog';
 import Link from 'next/link';
 
 export default function ProgramDetailPage() {
@@ -33,6 +33,7 @@ export default function ProgramDetailPage() {
   const [editingExercise, setEditingExercise] = useState<string | null>(null);
   const [editValues, setEditValues] = useState<{ sets: number; repsMin: number; repsMax: number }>({ sets: 3, repsMin: 8, repsMax: 12 });
   const [swapTarget, setSwapTarget] = useState<{ rowId: string; exerciseId: string; exerciseName: string } | null>(null);
+  const [addTarget, setAddTarget] = useState<{ dayId: string } | null>(null);
 
   const handleActivate = async () => {
     if (!user || !programId) return;
@@ -78,6 +79,39 @@ export default function ProgramDetailPage() {
       })),
     })));
     setSwapTarget(null);
+  };
+
+  const handleAddExercise = async (dayId: string, exerciseId: string) => {
+    const supabase = createClient();
+    const day = weeks.flatMap((w) => w.days).find((d: any) => d.id === dayId);
+    const maxOrder = day?.exercises?.length
+      ? Math.max(...day.exercises.map((e: any) => e.order_index))
+      : -1;
+
+    const { data: newRow } = await supabase
+      .from('program_exercises')
+      .insert({
+        program_day_id: dayId,
+        exercise_id: exerciseId,
+        order_index: maxOrder + 1,
+        target_sets: 3,
+        target_reps_min: 8,
+        target_reps_max: 12,
+        target_rir: 2,
+        rest_seconds: 120,
+      })
+      .select('*, exercise:exercises (name, equipment, is_compound)')
+      .single();
+
+    if (!newRow) return;
+
+    setWeeks((prev) => prev.map((w) => ({
+      ...w,
+      days: w.days.map((d: any) =>
+        d.id === dayId ? { ...d, exercises: [...d.exercises, newRow] } : d
+      ),
+    })));
+    setAddTarget(null);
   };
 
   const handleSaveExercise = async (exerciseRowId: string) => {
@@ -364,6 +398,15 @@ export default function ProgramDetailPage() {
                     </div>
                   )
                 ))}
+                <div className="px-4 pb-3 pt-1">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full border-dashed"
+                    onClick={() => setAddTarget({ dayId: day.id })}>
+                    <Plus className="h-4 w-4 mr-1" /> Add Exercise
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           ))}
@@ -428,13 +471,37 @@ export default function ProgramDetailPage() {
       </Dialog>
 
       {/* Swap exercise dialog */}
-      <SubstitutionDialog
+      <ExerciseBrowserDialog
         open={!!swapTarget}
         onOpenChange={(open) => { if (!open) setSwapTarget(null); }}
-        exerciseId={swapTarget?.exerciseId || ''}
-        exerciseName={swapTarget?.exerciseName || ''}
+        mode="swap"
+        currentExerciseName={swapTarget?.exerciseName}
+        existingExerciseIds={
+          swapTarget
+            ? weeks.flatMap((w) => w.days)
+                .find((d: any) => d.exercises?.some((e: any) => e.id === swapTarget.rowId))
+                ?.exercises?.map((e: any) => e.exercise_id) || []
+            : []
+        }
         onSelect={(newId, newName) => {
           if (swapTarget) handleSwapExercise(swapTarget.rowId, newId, newName);
+        }}
+      />
+
+      {/* Add exercise dialog */}
+      <ExerciseBrowserDialog
+        open={!!addTarget}
+        onOpenChange={(open) => { if (!open) setAddTarget(null); }}
+        mode="add"
+        existingExerciseIds={
+          addTarget
+            ? weeks.flatMap((w) => w.days)
+                .find((d: any) => d.id === addTarget.dayId)
+                ?.exercises?.map((e: any) => e.exercise_id) || []
+            : []
+        }
+        onSelect={(newId, newName) => {
+          if (addTarget) handleAddExercise(addTarget.dayId, newId);
         }}
       />
     </div>
