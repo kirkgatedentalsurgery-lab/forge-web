@@ -10,6 +10,7 @@ export interface ExerciseListItem {
   movementPattern: string;
   difficulty: string;
   isCompound: boolean;
+  isSystem: boolean;
   videoUrl: string | null;
   aliases: string[];
   primaryMuscles: string[];
@@ -31,17 +32,18 @@ export function useExercises(options: UseExercisesOptions = {}) {
     queryFn: async (): Promise<ExerciseListItem[]> => {
       const supabase = createClient();
 
+      // RLS handles visibility: system exercises are readable by all,
+      // custom exercises only by their creator
       let query = supabase
         .from('exercises')
         .select(`
           id, name, equipment, movement_pattern, difficulty, is_compound,
-          video_url, aliases,
+          is_system, video_url, aliases,
           exercise_muscle_groups (
             role, stimulus_magnitude,
             muscle_groups (name, display_name)
           )
         `)
-        .eq('is_system', true)
         .order('name');
 
       if (options.equipment) {
@@ -67,6 +69,7 @@ export function useExercises(options: UseExercisesOptions = {}) {
           movementPattern: ex.movement_pattern,
           difficulty: ex.difficulty,
           isCompound: ex.is_compound,
+          isSystem: ex.is_system,
           videoUrl: ex.video_url,
           aliases: ex.aliases || [],
           primaryMuscles: emgs

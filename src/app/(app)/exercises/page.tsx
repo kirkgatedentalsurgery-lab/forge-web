@@ -8,7 +8,8 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import { Search, Dumbbell, ExternalLink, Video } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Search, Dumbbell, ExternalLink, Video, Plus } from 'lucide-react';
 
 const EQUIPMENT_OPTIONS = [
   { value: '', label: 'All' },
@@ -50,7 +51,14 @@ export default function ExercisesPage() {
 
   return (
     <div className="p-4 lg:p-6 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold tracking-tight mb-4">Exercise Library</h1>
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-2xl font-bold tracking-tight">Exercise Library</h1>
+        <Link href="/exercises/create">
+          <Button size="sm" className="h-8">
+            <Plus className="h-4 w-4 mr-1" /> Create
+          </Button>
+        </Link>
+      </div>
 
       {/* Search */}
       <div className="relative mb-4">
@@ -133,6 +141,7 @@ export default function ExercisesPage() {
                   <div className="flex gap-1.5 shrink-0">
                     <Badge variant="secondary" className="text-[10px]">{ex.equipment}</Badge>
                     {ex.isCompound && <Badge className="text-[10px]">Compound</Badge>}
+                    {!ex.isSystem && <Badge variant="outline" className="text-[10px] border-primary text-primary">Custom</Badge>}
                   </div>
                 </CardContent>
               </Card>
