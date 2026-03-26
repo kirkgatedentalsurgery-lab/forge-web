@@ -43,12 +43,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signUp = async (email: string, password: string, displayName?: string) => {
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: { data: { display_name: displayName } },
     });
-    return { error: error as Error | null };
+    if (error) return { error: error as Error };
+
+    // Create user_profiles row so onboarding can UPDATE it
+    if (data.user) {
+      await supabase.from('user_profiles').upsert({
+        id: data.user.id,
+        display_name: displayName || '',
+        onboarding_completed: false,
+      }, { onConflict: 'id' });
+    }
+
+    return { error: null };
   };
 
   const signIn = async (email: string, password: string) => {

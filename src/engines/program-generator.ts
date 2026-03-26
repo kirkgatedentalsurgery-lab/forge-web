@@ -148,9 +148,16 @@ async function fetchExercises(
     .in('difficulty', allowedDifficulties)
     .eq('is_system', true);
 
-  if (error) throw error;
+  if (error) throw new Error('Failed to fetch exercises: ' + error.message);
 
-  return (data || []).map((raw: any) => ({
+  if (!data || data.length === 0) {
+    throw new Error(
+      `No exercises found matching equipment [${equipment.join(', ')}] and difficulty [${allowedDifficulties.join(', ')}]. ` +
+      'Please ensure the exercise database has been seeded.'
+    );
+  }
+
+  return data.map((raw: any) => ({
     id: raw.id,
     name: raw.name,
     equipment: raw.equipment,

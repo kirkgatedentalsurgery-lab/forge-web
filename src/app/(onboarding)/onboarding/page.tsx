@@ -115,8 +115,9 @@ export default function OnboardingPage() {
     try {
       const supabase = createClient();
 
-      // Save profile
-      const { error: profileError } = await supabase.from('user_profiles').update({
+      // Save profile — use UPSERT in case row doesn't exist yet
+      const { error: profileError } = await supabase.from('user_profiles').upsert({
+        id: user.id,
         training_goal: store.goal,
         experience_level: store.experience,
         training_age_months: store.trainingAgeMonths,
@@ -125,7 +126,7 @@ export default function OnboardingPage() {
         preferred_split: store.splitPreference === 'no_preference' ? null : store.splitPreference,
         body_weight: store.bodyWeight,
         onboarding_completed: true,
-      }).eq('id', user.id);
+      }, { onConflict: 'id' });
 
       if (profileError) throw new Error('Failed to save profile: ' + profileError.message);
 
@@ -134,20 +135,22 @@ export default function OnboardingPage() {
         const { data: muscleGroups } = await supabase
           .from('muscle_groups').select('id, display_name').in('display_name', store.priorityMuscles);
         if (muscleGroups?.length) {
-          await supabase.from('user_priority_muscles').insert(
+          const { error: muscleErr } = await supabase.from('user_priority_muscles').insert(
             muscleGroups.map((mg) => ({ user_id: user.id, muscle_group_id: mg.id, priority_level: 1 }))
           );
+          if (muscleErr) console.error('Priority muscles error:', muscleErr);
         }
       }
 
       // Save injuries
       for (const injury of store.injuries) {
-        await supabase.from('user_injuries').insert({
+        const { error: injuryErr } = await supabase.from('user_injuries').insert({
           user_id: user.id, body_area: injury.bodyArea, severity: injury.severity,
         });
+        if (injuryErr) console.error('Injury insert error:', injuryErr);
       }
 
-      // Generate first program
+      // Generate first program (non-blocking — if it fails, user can create one manually)
       let splitType: SplitType;
       if (store.splitPreference && store.splitPreference !== 'no_preference') {
         splitType = store.splitPreference as SplitType;
@@ -157,17 +160,22 @@ export default function OnboardingPage() {
         else splitType = 'push_pull_legs';
       }
 
-      await generateProgram(supabase, {
-        splitType,
-        daysPerWeek: store.daysPerWeek,
-        numWeeks: 5,
-        hasDeload: true,
-        availableEquipment: store.equipment as EquipmentType[],
-        experienceLevel: (store.experience || 'intermediate') as Difficulty,
-        userId: user.id,
-        programName: `${store.goal === 'strength' ? 'Strength' : 'Hypertrophy'} Block 1`,
-        sessionMinutes: store.sessionMinutes,
-      });
+      try {
+        await generateProgram(supabase, {
+          splitType,
+          daysPerWeek: store.daysPerWeek,
+          numWeeks: 5,
+          hasDeload: true,
+          availableEquipment: store.equipment as EquipmentType[],
+          experienceLevel: (store.experience || 'intermediate') as Difficulty,
+          userId: user.id,
+          programName: `${store.goal === 'strength' ? 'Strength' : 'Hypertrophy'} Block 1`,
+          sessionMinutes: store.sessionMinutes,
+        });
+      } catch (genErr: any) {
+        console.error('Program generation failed (non-blocking):', genErr);
+        // Don't block onboarding — user can create a program manually
+      }
 
       // Show celebration
       setSaving(false);
